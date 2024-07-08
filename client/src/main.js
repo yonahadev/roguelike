@@ -72,6 +72,9 @@ socket.on('playerPosition', ({id,vector2}) => {
   playerPositions[id] = vector2
 })
 
+socket.on('playerLeft', (id) => { 
+  delete playerPositions[id]
+})
 
 let renderFunction = (time) => { 
   if (context) { 
@@ -79,7 +82,9 @@ let renderFunction = (time) => {
     context.clearRect(0, 0, 400, 400)
     handleMovement()
     Object.entries(playerPositions).forEach(([key, value]) => { 
-      context.fillRect(value.x, value.y, 100, 100)
+      if (value) { 
+        context.fillRect(value.x, value.y, 100, 100)
+      }
     })
     let currentTime = new Date().getTime()
     let timeSinceSend = currentTime - lastSendTime

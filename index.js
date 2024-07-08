@@ -14,12 +14,18 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log(socket, ' user connected')
-  socket.emit('id',socket.id)
+  console.log(socket.id,'connected')
+
+  socket.emit('id', socket.id)
+  
   socket.on('playerPosition', (position) => { 
-    console.log(socket.id, position)
     socket.broadcast.emit('playerPosition', {id:socket.id,vector2:position})
-})
+  })
+  
+  socket.on('disconnect', () => { 
+    console.log(socket.id, 'disconnected')
+    socket.broadcast.emit('playerLeft', socket.id)
+  })
 })
 
 
