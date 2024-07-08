@@ -7,13 +7,14 @@ if (context) {
   console.warn("CANVAS CONTEXT NOT FOUND");
 }
 
-
 let inputQueue = new Set()
 let movementKeys = new Set(["w", "a", "s", "d"])
-
 let position = new vector2(0, 0)
-
 const playerSpeed = 2
+let socket = io()
+let lastSendTime = new Date().getTime()
+let playerPositions = {}
+let localID
 
 document.addEventListener("keydown", (event) => { 
   if (movementKeys.has(event.key)) { 
@@ -57,17 +58,36 @@ let handleMovement = () => {
       position.move(diagonalSpeed,diagonalSpeed)
       break
   }
+  if (localID) { 
+    playerPositions[localID] = position
+  }
 }
+
+socket.on('id', (id) => { 
+  localID = id
+  console.log(localID)
+})
+
+socket.on('playerPosition', ({id,vector2}) => { 
+  playerPositions[id] = vector2
+})
+
 
 let renderFunction = (time) => { 
   if (context) { 
     window.requestAnimationFrame(renderFunction)
     context.clearRect(0, 0, 400, 400)
     handleMovement()
-    context.fillRect(position.x, position.y, 100, 100)
-
+    Object.entries(playerPositions).forEach(([key, value]) => { 
+      context.fillRect(value.x, value.y, 100, 100)
+    })
+    let currentTime = new Date().getTime()
+    let timeSinceSend = currentTime - lastSendTime
+    if (timeSinceSend > 0.02) { 
+      timeSinceSend = currentTime
+      socket.emit('playerPosition',position)
+    }
   }
-
 }
 
 

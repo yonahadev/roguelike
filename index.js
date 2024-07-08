@@ -14,8 +14,15 @@ app.get('/', (req, res) => {
 });
 
 io.on('connection', (socket) => {
-  console.log('a user connected')
+  console.log(socket, ' user connected')
+  socket.emit('id',socket.id)
+  socket.on('playerPosition', (position) => { 
+    console.log(socket.id, position)
+    socket.broadcast.emit('playerPosition', {id:socket.id,vector2:position})
 })
+})
+
+
 
 server.listen(3000, () => {
   console.log('listening on localhost:3000');
