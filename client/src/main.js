@@ -138,6 +138,8 @@ let renderFunction = (time) => {
   context.clearRect(0, 0, canvas.width, canvas.height)
   let offsetX = (canvas.width-playerWidth)/2
   let offsetY = (canvas.height - playerHeight) / 2
+  let cameraOffsetX = (-localPosition.x + offsetX)
+  let cameraOffsetY = (-localPosition.y+offsetY)
   if (tilemap) { 
     let width = Math.sqrt(tilemap.length)
     for (let i = 0; i < tilemap.length; i++) {
@@ -145,7 +147,7 @@ let renderFunction = (time) => {
       let row = i%width
 
       context.fillStyle = tilemap[i]
-      context.fillRect(column * 100 - localPosition.x + offsetX, row*100- localPosition.y + offsetY, 101, playerHeight)
+      context.fillRect(column * 100+  Math.floor(cameraOffsetX), row*100 + Math.floor(cameraOffsetY), 100, playerHeight)
       context.fillStyle = 'black'
     }
   }
@@ -163,7 +165,7 @@ let renderFunction = (time) => {
       let name = data["name"]
       let colour = data["colour"]
       if (position) { 
-        drawPlayerWithNameTag(name,position.x-localPosition.x+offsetX,position.y-localPosition.y+offsetY,colour)
+        drawPlayerWithNameTag(name,position.x+cameraOffsetX,position.y+cameraOffsetX,colour)
       }
     }
   })
