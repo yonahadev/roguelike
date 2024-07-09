@@ -127,3 +127,31 @@ table {
   border-collapse: collapse;
   border-spacing: 0;
 }
+
+form {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 10; /* Adjust z-index as needed to ensure it's above other elements */
+  background-color: white; /* Optional: Set a background color */
+  padding: 20px;
+  border: 1px solid #ccc; /* Optional: Add a border */
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Optional: Add a box shadow */
+}
+
+/* Centering the form label and input */
+form label,
+form input {
+  display: block;
+  margin-bottom: 10px;
+}
+
+form input {
+  width: 100%;
+  padding: 8px;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+}
