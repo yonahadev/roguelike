@@ -7,7 +7,18 @@
   </head>
 
   <body style="overflow: hidden">
-    <canvas id="canvas" width="1" height="1" style=""></canvas>
+    <form id="nameForm">
+      <label>Enter a name</label>
+      <input id="nameInput" type="text" />
+      <label>Red</label>
+      <input type="radio" checked value="red" name="colour" />
+      <label>Green</label>
+      <input type="radio" value="green" name="colour" />
+      <label>Blue</label>
+      <input type="radio" value="blue" name="colour" />
+      <input type="submit" />
+    </form>
+    <canvas id="canvas" width="1" height="1"></canvas>
   </body>
 
   <script src="/socket.io/socket.io.js"></script>

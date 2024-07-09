@@ -10,6 +10,15 @@ const PORT = process.env.PORT
 //format of playerData[player][position] etc
 let playerData = {}
 
+let updatePlayerData = (id, dataKey, dataValue) => { 
+    if (playerData[id]) { 
+      playerData[id][dataKey] = dataValue
+    } else {
+      playerData[id] = {}
+      playerData[id][dataKey] = dataValue
+    }
+}
+
 app.use(express.static(path.join(__dirname,'client')))
 
 app.get('/', (req, res) => {
@@ -22,17 +31,17 @@ io.on('connection', (socket) => {
   socket.emit('id', socket.id) 
   
   socket.on('playerPosition', (position) => { 
-    console.log(position)
-    if (playerData[socket.id]) { 
-      playerData[socket.id]["position"] = position
-    } else {
-      playerData[socket.id] = {}
-      playerData[socket.id]["position"] = position
-    }
+    updatePlayerData(socket.id,"position",position)
   })
   
+  socket.on('startInfo', ({name,colour}) => { 
+    updatePlayerData(socket.id, "name", name)
+    updatePlayerData(socket.id, "colour", colour)
+  })
+
   socket.on('disconnect', () => { 
     console.log(socket.id, 'disconnected')
+    delete playerData[socket.id]
   })
 })
 
@@ -46,4 +55,4 @@ setInterval(() => {
 
 setInterval(() => {
   console.log(playerData)
-}, 1000);
+}, 3000);
