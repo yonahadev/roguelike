@@ -9,6 +9,8 @@ let lastSendTime = new Date().getTime()
 let lastUpdateTime = new Date().getTime()
 let playerData = {}
 let localID
+let playerWidth = 100
+let playerHeight = 100
 
 let resizeCanvas = () => {
   canvas.width = window.innerWidth
@@ -16,7 +18,7 @@ let resizeCanvas = () => {
 }
 
 let drawPlayer = (x,y) => { 
-  context.fillRect(x, y, 100, 100)
+  context.fillRect(x, y, playerWidth, playerHeight)
 }
 
 window.addEventListener('resize', resizeCanvas, false)
@@ -32,6 +34,10 @@ document.addEventListener("keyup", (event) => {
     inputQueue.delete(event.key)
   }
 })
+
+let checkCollisions = (position,position2) => {
+
+}
 
 let handleMovement = () => { 
   let input1 = [...inputQueue][0]
