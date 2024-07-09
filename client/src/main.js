@@ -15,6 +15,7 @@ let playerHeight = 100
 let canMove = false
 let localName
 let localColour
+let tilemap
 
 form.addEventListener('submit', (event) => {
   event.preventDefault()
@@ -88,9 +89,10 @@ let handleMovement = () => {
   const diagonalSpeed = PLAYER_SPEED/Math.sqrt(2)
   switch (true) { 
     case (input1 == "w" && input2 == undefined):
-      let isColliding = checkCollisions(localPosition, new vector2(playerWidth, playerHeight), new vector2(0, -1000), new vector2(canvas.width, 1000))
-      console.log(isColliding)
-      isColliding == false ? localPosition.move(0,-PLAYER_SPEED) : null
+      // let isColliding = checkCollisions(localPosition, new vector2(playerWidth, playerHeight), new vector2(0, -1000), new vector2(canvas.width, 1000))
+      // console.log(isColliding)
+      // isColliding == false ? localPosition.move(0, -PLAYER_SPEED) : null
+      localPosition.move(0,-PLAYER_SPEED)
       break
     case (input1 == "a" && input2 == undefined):
       localPosition.move(-PLAYER_SPEED,0)
@@ -124,13 +126,30 @@ socket.on('playerData', (playerDataFromServer) => {
   playerData = playerDataFromServer
 })
 
+socket.on('tilemap', (receivedTilemap) => { 
+  tilemap = receivedTilemap
+  console.log(tilemap)
+})
+
 
 
 let renderFunction = (time) => { 
   window.requestAnimationFrame(renderFunction)
   context.clearRect(0, 0, canvas.width, canvas.height)
   let offsetX = (canvas.width-playerWidth)/2
-  let offsetY = (canvas.height-playerHeight)/2
+  let offsetY = (canvas.height - playerHeight) / 2
+  if (tilemap) { 
+    let width = Math.sqrt(tilemap.length)
+    for (let i = 0; i < tilemap.length; i++) {
+      let column = Math.floor(i/width)
+      let row = i%width
+
+      context.fillStyle = tilemap[i]
+      context.fillRect(column * 100 - localPosition.x + offsetX, row*100- localPosition.y + offsetY, 101, playerHeight)
+      context.fillStyle = 'black'
+    }
+  }
+
   if (localName) { 
     drawPlayerWithNameTag(localName,offsetX,offsetY,localColour)
   }
@@ -148,6 +167,7 @@ let renderFunction = (time) => {
       }
     }
   })
+
 
   let currentTime = new Date().getTime()
   let timeSinceUpdate = currentTime - lastUpdateTime

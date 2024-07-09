@@ -9,6 +9,21 @@ const PORT = process.env.PORT
 
 //format of playerData[player][position] etc
 let playerData = {}
+let tilemap = []
+let tileMapColours = ["red","blue","green","yellow","purple"]
+
+
+let getRandomInt = (min, max) => { 
+  return Math.floor(Math.random() * (max-min) + min)
+}
+
+for (let i = 0; i < 10; i++) { 
+  for (let j = 0; j < 10; j++) { 
+    let int = getRandomInt(0, tileMapColours.length)
+    console.log(int)
+    tilemap.push(tileMapColours[int])
+  }
+}
 
 let updatePlayerData = (id, dataKey, dataValue) => { 
     if (playerData[id]) { 
@@ -29,6 +44,7 @@ io.on('connection', (socket) => {
   console.log(socket.id, 'connected')
   
   socket.emit('id', socket.id) 
+  socket.emit('tilemap',tilemap)
   
   socket.on('playerPosition', (position) => { 
     updatePlayerData(socket.id,"position",position)
