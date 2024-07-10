@@ -10,7 +10,7 @@ const PORT = process.env.PORT
 //format of playerData[player][position] etc
 let playerData = {}
 let tilemap = []
-let tileMapColours = ["red","blue","green","yellow","purple"]
+let tileMapImages = ["wall.png","floor.png"]
 
 
 let getRandomInt = (min, max) => { 
@@ -19,9 +19,8 @@ let getRandomInt = (min, max) => {
 
 for (let i = 0; i < 10; i++) { 
   for (let j = 0; j < 10; j++) { 
-    let int = getRandomInt(0, tileMapColours.length)
-    console.log(int)
-    tilemap.push(tileMapColours[int])
+    let int = getRandomInt(0, tileMapImages.length)
+    tilemap.push(tileMapImages[int])
   }
 }
 

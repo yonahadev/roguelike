@@ -17,6 +17,16 @@ let localName
 let localColour
 let tilemap
 
+const imageFilenames = ['floor.png', 'wall.png']
+let images = {}
+
+for (let i = 0; i < imageFilenames.length; i++) { 
+  let fileName = imageFilenames[i]
+  let image = new Image()
+  image.src = '../res/' + fileName
+  images[fileName] = image
+}
+
 form.addEventListener('submit', (event) => {
   event.preventDefault()
   form.style.visibility = 'hidden'
@@ -40,6 +50,12 @@ let resizeCanvas = () => {
 
 let drawPlayer = (x,y) => { 
   context.fillRect(x, y, playerWidth, playerHeight)
+}
+
+let drawImage = (image,x,y,width,height) => {
+  if (image.complete) { 
+    context.drawImage(image,x,y,width,height)
+  }
 }
 
 let drawText = (text, x, y) => { 
@@ -138,7 +154,7 @@ let renderFunction = (time) => {
   context.clearRect(0, 0, canvas.width, canvas.height)
   let offsetX = (canvas.width-playerWidth)/2
   let offsetY = (canvas.height - playerHeight) / 2
-  let cameraOffsetX = (-localPosition.x + offsetX)
+  let cameraOffsetX = (-localPosition.x+offsetX)
   let cameraOffsetY = (-localPosition.y+offsetY)
   if (tilemap) { 
     let width = Math.sqrt(tilemap.length)
@@ -146,9 +162,10 @@ let renderFunction = (time) => {
       let column = Math.floor(i/width)
       let row = i%width
 
-      context.fillStyle = tilemap[i]
-      context.fillRect(column * 100+  Math.floor(cameraOffsetX), row*100 + Math.floor(cameraOffsetY), 100, playerHeight)
-      context.fillStyle = 'black'
+
+      context.imageSmoothingEnabled = false
+      let image = images[tilemap[i]]
+      drawImage(image,column * 100+  Math.floor(cameraOffsetX),row*100 + Math.floor(cameraOffsetY),100,100)
     }
   }
 
@@ -165,7 +182,7 @@ let renderFunction = (time) => {
       let name = data["name"]
       let colour = data["colour"]
       if (position) { 
-        drawPlayerWithNameTag(name,position.x+cameraOffsetX,position.y+cameraOffsetX,colour)
+        drawPlayerWithNameTag(name,position.x+cameraOffsetX,position.y+cameraOffsetY,colour)
       }
     }
   })
