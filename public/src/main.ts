@@ -2,10 +2,10 @@ import './index.css';
 
 import { io } from 'socket.io-client';
 import { MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
-import { Player, PlayerDictionary, Vec2 } from "../../shared/types";
+import { GameDictionary, Player, PlayerDictionary, Vec2 } from "../../shared/types";
 
 const PLAYER_SPEED = 0.1
-const SCALE = 75
+const SCALE = 100
 
 let canvas: HTMLCanvasElement | null = document.getElementById("canvas") as HTMLCanvasElement
 canvas.style.visibility = 'hidden'
@@ -18,12 +18,13 @@ let form:HTMLFormElement|null = document.getElementById("nameForm") as HTMLFormE
 let inputQueue = new Set()
 let movementKeys = new Set(["w", "a", "s", "d"])
 
-
-
 let socket = io('http://localhost:3000')
 let lastSendTime = new Date().getTime()
 let lastUpdateTime = new Date().getTime()
-let playerData:PlayerDictionary = {}
+let gameData:GameDictionary = {
+  playerData: {},
+  rubyData: []
+}
 let localID: string
 let localPlayer: Player = {
   name: "unnamed player",
@@ -34,7 +35,7 @@ let canMove = false
 
 let tilemap:string[] = []
 
-const imageFilenames = ['floor.png', 'wall.png']
+const imageFilenames = ['floor.png', 'wall.png','ruby.png']
 let collideableTiles = new Set(['wall.png'])
 
 type imageDictionary = {
@@ -89,7 +90,7 @@ let drawPlayer = (x: number, y: number) => {
 
 let drawImage = (image:HTMLImageElement,x:number,y:number,width:number,height:number) => {
   if (image.complete && context) { 
-    context.drawImage(image,x,y,SCALE,SCALE)
+    context.drawImage(image,x,y,SCALE*width,SCALE*height)
   }
 }
 
@@ -228,8 +229,8 @@ socket.on('id', (id) => {
   localID = id
   console.log('localID:',localID)
 })
-socket.on('playerData', (playerDataFromServer) => { 
-  playerData = playerDataFromServer
+socket.on('gameData', (gameDataFromServer) => { 
+  gameData = gameDataFromServer
 })
 
 socket.on('tilemap', (receivedTilemap) => { 
@@ -240,6 +241,8 @@ socket.on('tilemap', (receivedTilemap) => {
 
 let renderFunction = (time: number) => { 
   if (context) { 
+    let playerData = gameData.playerData
+
     window.requestAnimationFrame(renderFunction)
     context.clearRect(0, 0, canvas.width, canvas.height)
     let offsetX = (canvas.width-SCALE)/2
@@ -258,6 +261,11 @@ let renderFunction = (time: number) => {
       }
     }
 
+    for (let i = 0; i < gameData.rubyData.length; i++) { 
+      let position = gameData.rubyData[i]
+      drawImage(images['ruby.png'], position.x*SCALE+Math.floor(cameraOffsetX),position.y*SCALE+Math.floor(cameraOffsetY), 1, 1)
+    }
+
     drawPlayerWithNameTag(localPlayer.name,offsetX,offsetY,localPlayer.colour)
 
     let string = "Players: " + String(Object.keys(playerData).length)
@@ -265,6 +273,14 @@ let renderFunction = (time: number) => {
     if (textDimensions) { 
       let height = textDimensions.y
       drawText(string,0,height)
+    }
+    let rubyString = "rubies: 5"
+    let rubyTextDimensions = getTextDimensions(rubyString)
+    if (rubyTextDimensions) { 
+      let height = rubyTextDimensions.y
+      let width = rubyTextDimensions.x
+      drawText(rubyString, canvas.width - width - 50, height + 50)
+      drawImage(images['ruby.png'],canvas.width-width-SCALE-10,height+10,0.5,0.5)
     }
 
     Object.entries(playerData).forEach(([playerID, playerData]) => {  
@@ -275,6 +291,7 @@ let renderFunction = (time: number) => {
       }
     })
 
+    
 
     let currentTime = new Date().getTime()
     let timeSinceUpdate = currentTime - lastUpdateTime
