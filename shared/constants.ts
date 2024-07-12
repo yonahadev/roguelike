@@ -1,4 +1,4 @@
-import { GameDictionary, Player, PlayerDictionary } from "./types"
+import { GameDictionary, Player } from "./types"
 
 export const MAP_WIDTH = 20
 export const MAP_HEIGHT = 20
