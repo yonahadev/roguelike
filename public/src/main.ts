@@ -1,7 +1,7 @@
 import './index.css';
 
 import { io } from 'socket.io-client';
-import { MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
+import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
 import { GameDictionary, Player, PlayerDictionary, Vec2 } from "../../shared/types";
 
 const PLAYER_SPEED = 0.1
@@ -21,16 +21,11 @@ let movementKeys = new Set(["w", "a", "s", "d"])
 let socket = io('http://localhost:3000')
 let lastSendTime = new Date().getTime()
 let lastUpdateTime = new Date().getTime()
-let gameData:GameDictionary = {
-  playerData: {},
-  rubyData: []
-}
+let gameData = structuredClone(DEFAULT_GAME_DATA)
 let localID: string
-let localPlayer: Player = {
-  name: "unnamed player",
-  position: {x:5,y:5},
-  colour: "black"
-}
+let localPlayer = structuredClone(DEFAULT_PLAYER_DATA)
+let collectedRubies: string[] = []
+
 let canMove = false
 
 let tilemap:string[] = []
@@ -155,7 +150,7 @@ let checkCollisions = (position1:Vec2,dimensions1:Vec2,position2:Vec2,dimensions
   return (position1.x < position2.x + dimensions2.x && 
           position1.x + dimensions1.x > position2.x &&
           position1.y < position2.y + dimensions2.y && 
-          position1.y + position1.y > position2.y
+          position1.y + dimensions1.y > position2.y
   )
 }
 
@@ -167,6 +162,19 @@ let checkPlayerCollisions = () => {
   let bottomRight = getTileAtPosition(Math.floor(pos.x) + 1, Math.floor(pos.y) + 1)
   return collideableTiles.has(topLeft) || collideableTiles.has(topRight) || collideableTiles.has(bottomLeft) || collideableTiles.has(bottomRight)
 }
+
+let handleRubyCollection = () => { 
+  Object.keys(gameData.rubyData).forEach((key:string) => { 
+    let position = JSON.parse(key)
+    let collision = checkCollisions(localPlayer.position, { x: 1, y: 1 }, position, { x: 1, y: 1 })
+
+    if (collision) { 
+      delete gameData.rubyData[key]
+      collectedRubies.push(key)
+    }
+  })
+}
+
 
 let handleMovement = () => { 
   let input1 = [...inputQueue][0]
@@ -231,6 +239,8 @@ socket.on('id', (id) => {
 })
 socket.on('gameData', (gameDataFromServer) => { 
   gameData = gameDataFromServer
+  let localPlayerFromServer = gameData.playerData[localID]
+  localPlayer.rubies = localPlayerFromServer.rubies
 })
 
 socket.on('tilemap', (receivedTilemap) => { 
@@ -239,59 +249,73 @@ socket.on('tilemap', (receivedTilemap) => {
 
 
 
-let renderFunction = (time: number) => { 
-  if (context) { 
+let renderFunction = (time: number) => {
+  if (context) {
     let playerData = gameData.playerData
 
     window.requestAnimationFrame(renderFunction)
     context.clearRect(0, 0, canvas.width, canvas.height)
-    let offsetX = (canvas.width-SCALE)/2
-    let offsetY = (canvas.height-SCALE)/2
-    let cameraOffsetX = (-localPlayer.position.x*SCALE+offsetX)
-    let cameraOffsetY = (-localPlayer.position.y*SCALE+offsetY)
-    if (tilemap.length > 0) { 
-      for (let i = 0; i < MAP_WIDTH*MAP_HEIGHT; i++) {
-        let column = Math.floor(i/MAP_WIDTH)
-        let row = i%MAP_HEIGHT
+    let offsetX = (canvas.width - SCALE) / 2
+    let offsetY = (canvas.height - SCALE) / 2
+    let cameraOffsetX = (-localPlayer.position.x * SCALE + offsetX)
+    let cameraOffsetY = (-localPlayer.position.y * SCALE + offsetY)
+    if (tilemap.length > 0) {
+      for (let i = 0; i < MAP_WIDTH * MAP_HEIGHT; i++) {
+        let column = Math.floor(i / MAP_WIDTH)
+        let row = i % MAP_HEIGHT
         context.imageSmoothingEnabled = false
         let image = images[tilemap[i]]
-        let x = column*SCALE+Math.floor(cameraOffsetX)
-        let y = row*SCALE+Math.floor(cameraOffsetY)
+        let x = column * SCALE + Math.floor(cameraOffsetX)
+        let y = row * SCALE + Math.floor(cameraOffsetY)
         drawImage(image, x, y, 1, 1)
       }
     }
 
-    for (let i = 0; i < gameData.rubyData.length; i++) { 
-      let position = gameData.rubyData[i]
-      drawImage(images['ruby.png'], position.x*SCALE+Math.floor(cameraOffsetX),position.y*SCALE+Math.floor(cameraOffsetY), 1, 1)
-    }
+ 
+    
+    
 
-    drawPlayerWithNameTag(localPlayer.name,offsetX,offsetY,localPlayer.colour)
+    drawPlayerWithNameTag(localPlayer.name, offsetX, offsetY, localPlayer.colour)
 
-    let string = "Players: " + String(Object.keys(playerData).length)
-    let textDimensions = getTextDimensions(string)
-    if (textDimensions) { 
-      let height = textDimensions.y
-      drawText(string,0,height)
-    }
-    let rubyString = "rubies: 5"
+    // let string = "Players: " + String(Object.keys(playerData).length)
+    // let textDimensions = getTextDimensions(string)
+    // if (textDimensions) { 
+    //   let height = textDimensions.y
+    //   drawText(string,0,height)
+    // }
+    let rubyString = `rubies: ${localPlayer.rubies}`
     let rubyTextDimensions = getTextDimensions(rubyString)
-    if (rubyTextDimensions) { 
+    if (rubyTextDimensions) {
       let height = rubyTextDimensions.y
       let width = rubyTextDimensions.x
       drawText(rubyString, canvas.width - width - 50, height + 50)
-      drawImage(images['ruby.png'],canvas.width-width-SCALE-10,height+10,0.5,0.5)
+      drawImage(images['ruby.png'], canvas.width - width - SCALE - 10, height + 10, 0.5, 0.5)
     }
 
-    Object.entries(playerData).forEach(([playerID, playerData]) => {  
-      if (playerID != localID && playerID && playerData) { 
-        if (playerData) { 
-          drawPlayerWithNameTag(playerData.name,playerData.position.x*SCALE+cameraOffsetX,playerData.position.y*SCALE+cameraOffsetY,playerData.colour)
+    Object.entries(playerData).forEach(([playerID, playerData]) => {
+      if (playerID != localID && playerID && playerData) {
+        if (playerData) {
+          drawPlayerWithNameTag(playerData.name, playerData.position.x * SCALE + cameraOffsetX, playerData.position.y * SCALE + cameraOffsetY, playerData.colour)
         }
       }
     })
 
-    
+    let players = Object.keys(gameData.playerData)
+    let height = 0
+    for (let i = 0; i < players.length; i++) {
+      let player = gameData.playerData[players[i]]
+      let text = `${player.name} rubies: ${player.rubies}`
+      let dimensions = getTextDimensions(text)
+      if (dimensions) { 
+        drawText(text, 0, height+50)
+        height += dimensions.y
+      } 
+    }
+
+    Object.keys(gameData.rubyData).forEach((key:string) => { 
+      let position = JSON.parse(key)
+      drawImage(images['ruby.png'], position.x*SCALE+Math.floor(cameraOffsetX),position.y*SCALE+Math.floor(cameraOffsetY), 1, 1)
+    })
 
     let currentTime = new Date().getTime()
     let timeSinceUpdate = currentTime - lastUpdateTime
@@ -299,11 +323,17 @@ let renderFunction = (time: number) => {
     if (timeSinceSend > 16.67) { 
       lastSendTime = currentTime
       socket.emit('playerData', localPlayer)
+      if (collectedRubies.length > 0) { 
+        socket.emit('collectedRubies', collectedRubies)
+        collectedRubies = []
+      }
+
     }
     if (timeSinceUpdate > 16.67) {
       lastUpdateTime = currentTime
       if (canMove) { 
         handleMovement()
+        handleRubyCollection()
       }
 
     }
