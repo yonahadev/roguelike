@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
 import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
-import { GameDictionary, Player, PlayerDictionary, Vec2 } from "../../shared/types";
+import { Vec2 } from "../../shared/types";
 import './index.css';
 
 const PLAYER_SPEED = 0.1
@@ -253,7 +253,7 @@ socket.on('tilemap', (receivedTilemap) => {
 
 
 
-let renderFunction = (time: number) => {
+let renderFunction = () => {
   if (context) {
     let playerData = gameData.playerData
 
@@ -281,12 +281,6 @@ let renderFunction = (time: number) => {
 
     drawPlayerWithNameTag(localPlayer.name, offsetX, offsetY, localPlayer.colour)
 
-    // let string = "Players: " + String(Object.keys(playerData).length)
-    // let textDimensions = getTextDimensions(string)
-    // if (textDimensions) { 
-    //   let height = textDimensions.y
-    //   drawText(string,0,height)
-    // }
     let rubyString = `rubies: ${localPlayer.rubies}`
     let rubyTextDimensions = getTextDimensions(rubyString)
     if (rubyTextDimensions) {
