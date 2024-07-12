@@ -15,14 +15,24 @@ const PORT = process.env.PORT
 
 import { Socket } from "socket.io";
 import { MAP_HEIGHT, MAP_WIDTH } from "./shared/constants";
-import { Player, PlayerDictionary, Vec2 } from "./shared/types";
+import { GameDictionary, Player, PlayerDictionary, Vec2 } from "./shared/types";
 
-let playerData: PlayerDictionary = {}
+let gameData: GameDictionary = {
+  playerData: {},
+  rubyData: []
+}
 let tilemap:string[] = []
-let tileMapImages = ["wall.png","floor.png"]
+let tileMapImages = ["wall.png", "floor.png"]
 
-let getRandomInt = (min:number, max:number) => { 
+let getRandomInt = (min:number, max:number) => { //max exclusive
   return Math.floor(Math.random() * (max-min) + min)
+}
+
+for (let i = 0; i < 10; i++) { 
+  let x = getRandomInt(1, MAP_WIDTH - 1)
+  let y = getRandomInt(1, MAP_HEIGHT - 1)
+  let position: Vec2 = { x: x, y: y }
+  gameData.rubyData.push(position)
 }
 
 for (let i = 0; i < MAP_WIDTH ; i++) { 
@@ -41,12 +51,12 @@ io.on('connection', (socket:Socket) => {
   socket.emit('tilemap',tilemap)
   
   socket.on('playerData',(receivedClientData:Player) => {
-    playerData[socket.id] = receivedClientData
+    gameData["playerData"][socket.id] = receivedClientData
   })
 
   socket.on('disconnect', () => { 
     console.log(socket.id, 'disconnected')
-    delete playerData[socket.id]
+    delete gameData["playerData"][socket.id]
   })
 })
 
@@ -55,9 +65,9 @@ server.listen(process.env.PORT, () => {
 });
 
 setInterval(() => { 
-  io.emit('playerData',playerData)
+  io.emit('gameData',gameData)
 }, 16.67)
 
 setInterval(() => {
-  console.log(playerData)
+  console.log(gameData)
 }, 3000);

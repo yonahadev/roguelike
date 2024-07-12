@@ -12,3 +12,8 @@ export type Player = {
 export type PlayerDictionary = {
   [key:string]:Player
 }
+
+export type GameDictionary = {
+  playerData: PlayerDictionary,
+  rubyData: Vec2[]
+}
