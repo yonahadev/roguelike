@@ -1,8 +1,7 @@
-import './index.css';
-
 import { io } from 'socket.io-client';
 import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
 import { GameDictionary, Player, PlayerDictionary, Vec2 } from "../../shared/types";
+import './index.css';
 
 const PLAYER_SPEED = 0.1
 const SCALE = 100
@@ -18,7 +17,12 @@ let form:HTMLFormElement|null = document.getElementById("nameForm") as HTMLFormE
 let inputQueue = new Set()
 let movementKeys = new Set(["w", "a", "s", "d"])
 
-let socket = io('http://localhost:3000')
+
+const SERVER_URL = import.meta.env.VITE_SERVER_URL
+
+console.log(import.meta.env.BASE_URL)
+
+let socket = io(SERVER_URL)
 let lastSendTime = new Date().getTime()
 let lastUpdateTime = new Date().getTime()
 let gameData = structuredClone(DEFAULT_GAME_DATA)
