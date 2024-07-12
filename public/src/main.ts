@@ -45,7 +45,7 @@ let images:imageDictionary = {}
 for (let i = 0; i < imageFilenames.length; i++) { 
   let fileName = imageFilenames[i]
   let image = new Image()
-  image.src = '../res/'+fileName
+  image.src = '../public/'+fileName
   images[fileName] = image
 }
 
