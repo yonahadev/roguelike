@@ -85,7 +85,7 @@ io.on('connection', (socket:Socket) => {
 })
 
 server.listen(process.env.PORT, () => {
-  console.log('listening on',process.env.SERVER_URL);
+  console.log('listening on',process.env.PORT);
 });
 
 setInterval(() => { 
