@@ -12,15 +12,13 @@ const io = new Server(server, {
   }
 })
 const PORT = process.env.PORT
+const MAX_RUBIES = 10
 
 import { Socket } from "socket.io";
-import { MAP_HEIGHT, MAP_WIDTH } from "./shared/constants";
+import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, MAP_HEIGHT, MAP_WIDTH } from "./shared/constants";
 import { GameDictionary, Player, PlayerDictionary, Vec2 } from "./shared/types";
 
-let gameData: GameDictionary = {
-  playerData: {},
-  rubyData: []
-}
+let gameData = structuredClone(DEFAULT_GAME_DATA)
 let tilemap:string[] = []
 let tileMapImages = ["wall.png", "floor.png"]
 
@@ -28,11 +26,19 @@ let getRandomInt = (min:number, max:number) => { //max exclusive
   return Math.floor(Math.random() * (max-min) + min)
 }
 
-for (let i = 0; i < 10; i++) { 
-  let x = getRandomInt(1, MAP_WIDTH - 1)
-  let y = getRandomInt(1, MAP_HEIGHT - 1)
-  let position: Vec2 = { x: x, y: y }
-  gameData.rubyData.push(position)
+
+let addRubies = () => { 
+  let rubies = gameData.rubyData
+  while (Object.keys(rubies).length < MAX_RUBIES) { 
+    let x = getRandomInt(1, MAP_WIDTH - 1)
+    let y = getRandomInt(1, MAP_HEIGHT - 1)
+    let position: Vec2 = { x: x, y: y }
+    let id = JSON.stringify(position)
+    if (id in rubies == false) { 
+      gameData.rubyData[id] = true
+    }
+
+  }
 }
 
 for (let i = 0; i < MAP_WIDTH ; i++) { 
@@ -50,13 +56,31 @@ io.on('connection', (socket:Socket) => {
   socket.emit('id', socket.id) 
   socket.emit('tilemap',tilemap)
   
-  socket.on('playerData',(receivedClientData:Player) => {
-    gameData["playerData"][socket.id] = receivedClientData
+  socket.on('playerData', (receivedClientData: Player) => {
+    if (socket.id in gameData.playerData) {
+      gameData.playerData[socket.id].position = receivedClientData.position
+      gameData.playerData[socket.id].colour = receivedClientData.colour
+      gameData.playerData[socket.id].name = receivedClientData.name
+    } else { 
+      gameData.playerData[socket.id] = structuredClone(DEFAULT_PLAYER_DATA)
+    }
+
+  })
+
+  socket.on('collectedRubies', (collectedRubies) => { 
+    for (let i = 0; i < collectedRubies.length; i++) {
+      let ruby = collectedRubies[i]
+      if (gameData.rubyData[ruby]) {
+        gameData.playerData[socket.id].rubies += 1
+        delete gameData.rubyData[ruby]
+      }
+
+    }
   })
 
   socket.on('disconnect', () => { 
     console.log(socket.id, 'disconnected')
-    delete gameData["playerData"][socket.id]
+    delete gameData.playerData[socket.id]
   })
 })
 
@@ -69,5 +93,6 @@ setInterval(() => {
 }, 16.67)
 
 setInterval(() => {
-  console.log(gameData)
-}, 3000);
+  addRubies()
+  console.log(gameData.playerData)
+}, 5000);
