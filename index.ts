@@ -56,7 +56,7 @@ server.listen(process.env.PORT, () => {
 
 setInterval(() => { 
   io.emit('playerData',playerData)
-}, 20)
+}, 16.67)
 
 setInterval(() => {
   console.log(playerData)

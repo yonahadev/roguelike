@@ -18,6 +18,8 @@ let form:HTMLFormElement|null = document.getElementById("nameForm") as HTMLFormE
 let inputQueue = new Set()
 let movementKeys = new Set(["w", "a", "s", "d"])
 
+
+
 let socket = io('http://localhost:3000')
 let lastSendTime = new Date().getTime()
 let lastUpdateTime = new Date().getTime()
@@ -33,6 +35,7 @@ let canMove = false
 let tilemap:string[] = []
 
 const imageFilenames = ['floor.png', 'wall.png']
+let collideableTiles = new Set(['wall.png'])
 
 type imageDictionary = {
   [key:string]:HTMLImageElement
@@ -128,6 +131,14 @@ document.addEventListener("keydown", (event) => {
   }
 })
 
+window.onblur = () => { 
+  inputQueue.clear()
+}
+
+document.addEventListener('focus', () => {
+  inputQueue.clear()
+})
+
 document.addEventListener("keyup", (event) => { 
   if (movementKeys.has(event.key)) { 
     inputQueue.delete(event.key)
@@ -147,39 +158,69 @@ let checkCollisions = (position1:Vec2,dimensions1:Vec2,position2:Vec2,dimensions
   )
 }
 
+let checkPlayerCollisions = () => { 
+  let pos = localPlayer.position
+  let topLeft = getTileAtPosition(Math.floor(pos.x), Math.floor(pos.y))
+  let topRight = getTileAtPosition(Math.floor(pos.x) + 1, Math.floor(pos.y))
+  let bottomLeft = getTileAtPosition(Math.floor(pos.x), Math.floor(pos.y)+1)
+  let bottomRight = getTileAtPosition(Math.floor(pos.x) + 1, Math.floor(pos.y) + 1)
+  return collideableTiles.has(topLeft) || collideableTiles.has(topRight) || collideableTiles.has(bottomLeft) || collideableTiles.has(bottomRight)
+}
+
 let handleMovement = () => { 
   let input1 = [...inputQueue][0]
   let input2 = [...inputQueue][1]
-  const diagonalSpeed = PLAYER_SPEED/Math.sqrt(2)
+  const diagonalSpeed = PLAYER_SPEED / Math.sqrt(2)
+  let amountToMove: Vec2 = {x:0,y:0}
   switch (true) { 
     case (input1 == "w" && input2 == undefined):
-      localPlayer.position.y -= PLAYER_SPEED
+      amountToMove.y -= PLAYER_SPEED
       break
     case (input1 == "a" && input2 == undefined):
-      localPlayer.position.x -= PLAYER_SPEED
+      amountToMove.x -= PLAYER_SPEED
       break
     case (input1 == "s" && input2 == undefined):
-      localPlayer.position.y += PLAYER_SPEED
+      amountToMove.y += PLAYER_SPEED
       break
     case (input1 == "d" && input2 == undefined):
-      localPlayer.position.x += PLAYER_SPEED
+      amountToMove.x += PLAYER_SPEED
       break
     case (input1 == "w" && input2 == "d" || input2 == "w" && input1 == "d"):
-      localPlayer.position.x += diagonalSpeed
-      localPlayer.position.y -= diagonalSpeed
+      amountToMove.x += diagonalSpeed
+      amountToMove.y -= diagonalSpeed
       break
     case (input1 == "w" && input2 == "a" || input2 == "w" && input1 == "a"):
-      localPlayer.position.x -= diagonalSpeed
-      localPlayer.position.y -= diagonalSpeed
+      amountToMove.x -= diagonalSpeed
+      amountToMove.y -= diagonalSpeed
       break
     case (input1 == "s" && input2 == "a" || input2 == "s" && input1 == "a"):
-      localPlayer.position.x -= diagonalSpeed
-      localPlayer.position.y += diagonalSpeed
+      amountToMove.x -= diagonalSpeed
+      amountToMove.y += diagonalSpeed
       break
     case (input1 == "s" && input2 == "d" || input2 == "s" && input1 == "d"):
-      localPlayer.position.x += diagonalSpeed
-      localPlayer.position.y += diagonalSpeed
+      amountToMove.x += diagonalSpeed
+      amountToMove.y += diagonalSpeed
       break
+  }
+  localPlayer.position.x += amountToMove.x
+  if (checkPlayerCollisions()) { 
+    if (amountToMove.x < 0) {
+      localPlayer.position.x -= amountToMove.x
+      localPlayer.position.x = Math.floor(localPlayer.position.x)
+    } else { 
+      localPlayer.position.x -= amountToMove.x
+      localPlayer.position.x = Math.floor(localPlayer.position.x)+0.999
+    }
+  }
+  localPlayer.position.y += amountToMove.y
+  if (checkPlayerCollisions()) {
+    if (amountToMove.y < 0) {
+      localPlayer.position.y -= amountToMove.y
+      localPlayer.position.y = Math.floor(localPlayer.position.y)
+    } else { 
+      localPlayer.position.y -= amountToMove.y
+      localPlayer.position.y = Math.floor(localPlayer.position.y)+0.999
+    }
   }
 }
 
@@ -217,8 +258,6 @@ let renderFunction = (time: number) => {
       }
     }
 
-    console.log(cameraOffsetX,cameraOffsetY)
-
     drawPlayerWithNameTag(localPlayer.name,offsetX,offsetY,localPlayer.colour)
 
     let string = "Players: " + String(Object.keys(playerData).length)
@@ -240,12 +279,11 @@ let renderFunction = (time: number) => {
     let currentTime = new Date().getTime()
     let timeSinceUpdate = currentTime - lastUpdateTime
     let timeSinceSend = currentTime - lastSendTime
-    if (timeSinceSend > 16) { 
+    if (timeSinceSend > 16.67) { 
       lastSendTime = currentTime
       socket.emit('playerData', localPlayer)
-      console.log("sent to server")
     }
-    if (timeSinceUpdate > 20) {
+    if (timeSinceUpdate > 16.67) {
       lastUpdateTime = currentTime
       if (canMove) { 
         handleMovement()
