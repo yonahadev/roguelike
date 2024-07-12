@@ -4,6 +4,9 @@ import { io } from 'socket.io-client';
 import { MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
 import { Player, PlayerDictionary, Vec2 } from "../../shared/types";
 
+const PLAYER_SPEED = 0.1
+const SCALE = 75
+
 let canvas: HTMLCanvasElement | null = document.getElementById("canvas") as HTMLCanvasElement
 canvas.style.visibility = 'hidden'
 let context: CanvasRenderingContext2D | null = null
@@ -14,7 +17,7 @@ if (canvas) {
 let form:HTMLFormElement|null = document.getElementById("nameForm") as HTMLFormElement
 let inputQueue = new Set()
 let movementKeys = new Set(["w", "a", "s", "d"])
-const PLAYER_SPEED = 10
+
 let socket = io('http://localhost:3000')
 let lastSendTime = new Date().getTime()
 let lastUpdateTime = new Date().getTime()
@@ -22,11 +25,9 @@ let playerData:PlayerDictionary = {}
 let localID: string
 let localPlayer: Player = {
   name: "unnamed player",
-  position: {x:0,y:0},
+  position: {x:5,y:5},
   colour: "black"
 }
-let playerWidth = 100
-let playerHeight = 100
 let canMove = false
 
 let tilemap:string[] = []
@@ -74,23 +75,25 @@ let resizeCanvas = () => {
   canvas.height = window.innerHeight
 }
 
+
+
 let drawPlayer = (x: number, y: number) => { 
   if (context) { 
-    context.fillRect(x, y, playerWidth, playerHeight)
+    context.fillRect(x, y, SCALE, SCALE)
   }
   
 }
 
 let drawImage = (image:HTMLImageElement,x:number,y:number,width:number,height:number) => {
   if (image.complete && context) { 
-    context.drawImage(image,x,y,width,height)
+    context.drawImage(image,x,y,SCALE,SCALE)
   }
 }
 
 let drawText = (text:string, x:number, y:number) => { 
   if (context) { 
-    context.font = 'bold 25px arial'
-    context.fillText(String(text),x,y)
+    context.font = `bold ${Math.floor(25*SCALE/100)}px arial`
+    context.fillText(String(text), x, y)
   }
 
 }
@@ -111,7 +114,7 @@ let drawPlayerWithNameTag = (nameTag: string, x: number, y: number, colour: stri
       let width = textDimensions.x
       let verticalOffset = -5
       context.fillStyle = 'black'
-      drawText(nameTag,x-width/2+playerWidth/2,y+verticalOffset)
+      drawText(nameTag,x-width/2+SCALE/2,y+verticalOffset)
     }
   }
 
@@ -198,22 +201,23 @@ let renderFunction = (time: number) => {
   if (context) { 
     window.requestAnimationFrame(renderFunction)
     context.clearRect(0, 0, canvas.width, canvas.height)
-    let offsetX = (canvas.width-playerWidth)/2
-    let offsetY = (canvas.height - playerHeight) / 2
-    let cameraOffsetX = (-localPlayer.position.x+offsetX)
-    let cameraOffsetY = (-localPlayer.position.y+offsetY)
+    let offsetX = (canvas.width-SCALE)/2
+    let offsetY = (canvas.height-SCALE)/2
+    let cameraOffsetX = (-localPlayer.position.x*SCALE+offsetX)
+    let cameraOffsetY = (-localPlayer.position.y*SCALE+offsetY)
     if (tilemap.length > 0) { 
       for (let i = 0; i < MAP_WIDTH*MAP_HEIGHT; i++) {
         let column = Math.floor(i/MAP_WIDTH)
         let row = i%MAP_HEIGHT
         context.imageSmoothingEnabled = false
         let image = images[tilemap[i]]
-        let x = column * 100 +(cameraOffsetX)
-        let y = row*100 + Math.floor(cameraOffsetY)
-        drawImage(image,x,y,100,100)
+        let x = column*SCALE+Math.floor(cameraOffsetX)
+        let y = row*SCALE+Math.floor(cameraOffsetY)
+        drawImage(image, x, y, 1, 1)
       }
     }
 
+    console.log(cameraOffsetX,cameraOffsetY)
 
     drawPlayerWithNameTag(localPlayer.name,offsetX,offsetY,localPlayer.colour)
 
@@ -227,7 +231,7 @@ let renderFunction = (time: number) => {
     Object.entries(playerData).forEach(([playerID, playerData]) => {  
       if (playerID != localID && playerID && playerData) { 
         if (playerData) { 
-          drawPlayerWithNameTag(playerData.name,playerData.position.x+cameraOffsetX,playerData.position.y+cameraOffsetY,playerData.colour)
+          drawPlayerWithNameTag(playerData.name,playerData.position.x*SCALE+cameraOffsetX,playerData.position.y*SCALE+cameraOffsetY,playerData.colour)
         }
       }
     })
