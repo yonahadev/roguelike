@@ -11,17 +11,58 @@
   >
     <form
       id="nameForm"
-      class="absolute flex flex-col gap-4 text-xl font-semibold items-center"
+      class="absolute flex flex-col gap-4 text-xl font-semibold items-center image-pixel"
     >
       <h1 class="text-4xl font-bold animate-pulse">Roguelike</h1>
-      <label>Enter a name</label>
-      <input class="outline-black outline p-2" id="nameInput" type="text" />
-      <label>Red</label>
-      <input type="radio" checked value="red" name="colour" />
-      <label>Green</label>
-      <input type="radio" value="green" name="colour" />
-      <label>Blue</label>
-      <input type="radio" value="blue" name="colour" />
+      <input
+        placeholder="Enter name..."
+        class="outline-black outline p-2"
+        id="nameInput"
+        type="text"
+      />
+      <p>Choose Character</p>
+      <div class="w-full flex">
+        <label class="flex justify-center items-center flex-col w-56">
+          <input
+            class="peer hidden"
+            type="radio"
+            checked
+            value="electricCharacter"
+            name="colour"
+          />
+          <img
+            class="peer-checked:outline outline-blue-900 outline-4 p-2 peer-checked:animate-pulse w-48 aspect-square"
+            src="/public/electricCharacter.png"
+          />
+          <p class="text-center p-2">Shoot precise lightning!</p>
+        </label>
+        <label class="flex justify-center items-center flex-col w-56">
+          <input
+            class="peer hidden"
+            type="radio"
+            value="fireCharacter"
+            name="colour"
+          />
+          <img
+            class="peer-checked:outline outline-blue-900 outline-4 p-2 peer-checked:animate-pulse w-48 aspect-square"
+            src="/public/fireCharacter.png"
+          />
+          <p class="text-center p-2">Lots of aoe damage!</p>
+        </label>
+        <label class="flex justify-center items-center flex-col w-56">
+          <input
+            class="peer hidden"
+            type="radio"
+            value="iceCharacter"
+            name="colour"
+          />
+          <img
+            class="peer-checked:outline outline-blue-900 outline-4 p-2 peer-checked:animate-pulse w-48 aspect-square"
+            src="/public/iceCharacter.png"
+          />
+          <p class="text-center p-2">Slow down your enemies!</p>
+        </label>
+      </div>
       <input class="p-4 rounded-lg bg-black text-white" type="submit" />
     </form>
     <canvas class="bg-white" id="canvas" width="1" height="1"></canvas>
