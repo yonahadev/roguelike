@@ -14,3 +14,15 @@ export const DEFAULT_PLAYER_DATA: Player = {
   colour: "black",
   rubies: 0
 }
+
+export const IMAGE_NAMES = ['floor', 'wall', 'ruby', "baseEnemy", "electricCharacter", "fireCharacter", "iceCharacter"]
+
+export enum ImageIndices { 
+  floor = IMAGE_NAMES[0],
+  wall,
+  ruby,
+  baseEnemy,
+  electricCharacter,
+  fireCharacter,
+  iceCharacter,
+}

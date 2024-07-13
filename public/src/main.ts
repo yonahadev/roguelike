@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
+import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageIndices, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
 import { Vec2 } from "../../shared/types";
 import './index.css';
 
@@ -34,7 +34,7 @@ let canMove = false
 
 let tilemap:string[] = []
 
-const imageFilenames = ['floor.png', 'wall.png','ruby.png']
+
 let collideableTiles = new Set(['wall.png'])
 
 type imageDictionary = {
@@ -42,11 +42,13 @@ type imageDictionary = {
 }
 let images:imageDictionary = {}
 
-for (let i = 0; i < imageFilenames.length; i++) { 
-  let fileName = imageFilenames[i]
+for (let i = 0; i < IMAGE_NAMES.length; i++) { 
+  let imageName = IMAGE_NAMES[i]
   let image = new Image()
-  image.src = '/'+fileName
-  images[fileName] = image
+  let fullPath = `/${imageName}.png`
+  image.src = fullPath
+  console.log(imageName)
+  images[imageName] = image
 }
 
 form.addEventListener('submit', (event) => {
@@ -287,7 +289,7 @@ let renderFunction = () => {
       let height = rubyTextDimensions.y
       let width = rubyTextDimensions.x
       drawText(rubyString, canvas.width - width - 50, height + 50)
-      drawImage(images['ruby.png'], canvas.width - width - SCALE - 10, height + 10, 0.5, 0.5)
+      drawImage(images[IMAGE_NAMES[ImageIndices.ruby]], canvas.width - width - SCALE - 10, height + 10, 0.5, 0.5)
     }
 
     Object.entries(playerData).forEach(([playerID, playerData]) => {
@@ -312,7 +314,7 @@ let renderFunction = () => {
 
     Object.keys(gameData.rubyData).forEach((key:string) => { 
       let position = JSON.parse(key)
-      drawImage(images['ruby.png'], position.x*SCALE+Math.floor(cameraOffsetX),position.y*SCALE+Math.floor(cameraOffsetY), 1, 1)
+      drawImage(images[IMAGE_NAMES[ImageIndices.ruby]], position.x*SCALE+Math.floor(cameraOffsetX),position.y*SCALE+Math.floor(cameraOffsetY), 1, 1)
     })
 
     let currentTime = new Date().getTime()

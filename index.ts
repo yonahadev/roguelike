@@ -15,12 +15,11 @@ const PORT = process.env.PORT
 const MAX_RUBIES = 10
 
 import { Socket } from "socket.io";
-import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, MAP_HEIGHT, MAP_WIDTH } from "./shared/constants";
-import { GameDictionary, Player, PlayerDictionary, Vec2 } from "./shared/types";
+import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageIndices, MAP_HEIGHT, MAP_WIDTH } from "./shared/constants";
+import { Player, Vec2 } from "./shared/types";
 
 let gameData = structuredClone(DEFAULT_GAME_DATA)
 let tilemap:string[] = []
-let tileMapImages = ["wall.png", "floor.png"]
 
 let getRandomInt = (min:number, max:number) => { //max exclusive
   return Math.floor(Math.random() * (max-min) + min)
@@ -44,9 +43,9 @@ let addRubies = () => {
 for (let i = 0; i < MAP_WIDTH ; i++) { 
   for (let j = 0; j < MAP_HEIGHT; j++) { 
     if (j == 0 || j == MAP_HEIGHT - 1 || i == 0 || i == MAP_WIDTH-1) {
-      tilemap.push(tileMapImages[0])
+      tilemap.push(IMAGE_NAMES[ImageIndices.wall])
     } else {
-      tilemap.push(tileMapImages[1])
+      tilemap.push(IMAGE_NAMES[ImageIndices.floor])
     }
   }
 }
