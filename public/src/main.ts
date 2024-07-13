@@ -30,6 +30,8 @@ let localID: string
 let localPlayer = structuredClone(DEFAULT_PLAYER_DATA)
 let collectedRubies: string[] = []
 
+let mouseAngle = 0
+
 let canMove = false
 
 let tilemap:string[] = []
@@ -112,19 +114,21 @@ let getTextDimensions = (text: string) => {
     return {x:metrics.width,y:metrics.fontBoundingBoxAscent}
   }
 }
-
-let drawPlayerWithNameTag = (nameTag: string, x: number, y: number, character: string) => { 
+let drawPlayerWithNameTag = (nameTag: string, x: number, y: number, character: string) => {
   if (context) {
-    drawImage(images[character],x,y,1,1)
-    let textDimensions = getTextDimensions(nameTag)
+    context.save();
+    context.translate(x + SCALE / 2, y + SCALE / 2); //gpt-saviour top left is the origin so move it to where the player is centered
+    context.rotate(mouseAngle);
+    drawImage(images[character], -SCALE / 2, -SCALE / 2, 1, 1);
+    context.restore();
+    let textDimensions = getTextDimensions(nameTag);
     if (textDimensions) {
-      let width = textDimensions.x
-      let verticalOffset = -5
-      context.fillStyle = 'black'
-      drawText(nameTag,x-width/2+SCALE/2,y+verticalOffset)
+      let width = textDimensions.x;
+      let verticalOffset = -5;
+      context.fillStyle = 'black';
+      drawText(nameTag, x - width / 2 + SCALE / 2, y + verticalOffset);
     }
   }
-
 }
   
 window.addEventListener('resize', resizeCanvas, false)
@@ -133,6 +137,19 @@ document.addEventListener("keydown", (event) => {
   if (movementKeys.has(event.key)) { 
     inputQueue.add(event.key)
   }
+})
+
+document.addEventListener("mousemove", (event) => { 
+  let centerX = canvas.width/2
+  let centerY = canvas.height/2
+  let differenceX = centerX - event.clientX
+  let differenceY = centerY - event.clientY
+  console.log("diffX", differenceX, "diffY", differenceY)
+  mouseAngle = Math.atan(-differenceX / differenceY)
+  if (differenceY < 0) { 
+    mouseAngle += Math.PI
+  }
+  console.log(mouseAngle)
 })
 
 window.onblur = () => { 
