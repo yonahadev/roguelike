@@ -17,8 +17,8 @@ export const DEFAULT_PLAYER_DATA: Player = {
 
 export const IMAGE_NAMES = ['floor', 'wall', 'ruby', "baseEnemy", "electricCharacter", "fireCharacter", "iceCharacter"]
 
-export enum ImageIndices { 
-  floor = IMAGE_NAMES[0],
+export enum ImageEnum { 
+  floor,
   wall,
   ruby,
   baseEnemy,

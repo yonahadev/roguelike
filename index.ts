@@ -15,7 +15,7 @@ const PORT = process.env.PORT
 const MAX_RUBIES = 10
 
 import { Socket } from "socket.io";
-import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageIndices, MAP_HEIGHT, MAP_WIDTH } from "./shared/constants";
+import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageEnum, MAP_HEIGHT, MAP_WIDTH } from "./shared/constants";
 import { Player, Vec2 } from "./shared/types";
 
 let gameData = structuredClone(DEFAULT_GAME_DATA)
@@ -43,9 +43,9 @@ let addRubies = () => {
 for (let i = 0; i < MAP_WIDTH ; i++) { 
   for (let j = 0; j < MAP_HEIGHT; j++) { 
     if (j == 0 || j == MAP_HEIGHT - 1 || i == 0 || i == MAP_WIDTH-1) {
-      tilemap.push(IMAGE_NAMES[ImageIndices.wall])
+      tilemap.push(IMAGE_NAMES[ImageEnum.wall])
     } else {
-      tilemap.push(IMAGE_NAMES[ImageIndices.floor])
+      tilemap.push(IMAGE_NAMES[ImageEnum.floor])
     }
   }
 }

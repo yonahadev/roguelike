@@ -1,5 +1,5 @@
 import { io } from 'socket.io-client';
-import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageIndices, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
+import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageEnum, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
 import { Vec2 } from "../../shared/types";
 import './index.css';
 
@@ -35,7 +35,7 @@ let canMove = false
 let tilemap:string[] = []
 
 
-let collideableTiles = new Set(['wall.png'])
+let collideableTiles = new Set([IMAGE_NAMES[ImageEnum.wall]])
 
 type imageDictionary = {
   [key:string]:HTMLImageElement
@@ -80,6 +80,9 @@ let resizeCanvas = () => {
   canvas.height = window.innerHeight
 }
 
+let getImage = (imageEnumNumber: number) => { 
+  return images[IMAGE_NAMES[imageEnumNumber]]
+}
 
 
 let drawPlayer = (x: number, y: number) => { 
@@ -289,7 +292,7 @@ let renderFunction = () => {
       let height = rubyTextDimensions.y
       let width = rubyTextDimensions.x
       drawText(rubyString, canvas.width - width - 50, height + 50)
-      drawImage(images[IMAGE_NAMES[ImageIndices.ruby]], canvas.width - width - SCALE - 10, height + 10, 0.5, 0.5)
+      drawImage(getImage(ImageEnum.ruby), canvas.width - width - SCALE - 10, height + 10, 0.5, 0.5)
     }
 
     Object.entries(playerData).forEach(([playerID, playerData]) => {
@@ -314,7 +317,7 @@ let renderFunction = () => {
 
     Object.keys(gameData.rubyData).forEach((key:string) => { 
       let position = JSON.parse(key)
-      drawImage(images[IMAGE_NAMES[ImageIndices.ruby]], position.x*SCALE+Math.floor(cameraOffsetX),position.y*SCALE+Math.floor(cameraOffsetY), 1, 1)
+      drawImage(getImage(ImageEnum.ruby), position.x*SCALE+Math.floor(cameraOffsetX),position.y*SCALE+Math.floor(cameraOffsetY), 1, 1)
     })
 
     let currentTime = new Date().getTime()
