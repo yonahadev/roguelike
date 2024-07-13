@@ -67,7 +67,7 @@ form.addEventListener('submit', (event) => {
     }
   }
   if (colour) { 
-    localPlayer.colour = colour
+    localPlayer.character = colour
   }
   if (name) { 
     localPlayer.name = name
@@ -113,10 +113,9 @@ let getTextDimensions = (text: string) => {
   }
 }
 
-let drawPlayerWithNameTag = (nameTag: string, x: number, y: number, colour: string) => { 
+let drawPlayerWithNameTag = (nameTag: string, x: number, y: number, character: string) => { 
   if (context) {
-    context.fillStyle = colour
-    drawPlayer(x, y)
+    drawImage(images[character],x,y,1,1)
     let textDimensions = getTextDimensions(nameTag)
     if (textDimensions) {
       let width = textDimensions.x
@@ -284,7 +283,7 @@ let renderFunction = () => {
     
     
 
-    drawPlayerWithNameTag(localPlayer.name, offsetX, offsetY, localPlayer.colour)
+    drawPlayerWithNameTag(localPlayer.name, offsetX, offsetY, localPlayer.character)
 
     let rubyString = `rubies: ${localPlayer.rubies}`
     let rubyTextDimensions = getTextDimensions(rubyString)
@@ -298,7 +297,7 @@ let renderFunction = () => {
     Object.entries(playerData).forEach(([playerID, playerData]) => {
       if (playerID != localID && playerID && playerData) {
         if (playerData) {
-          drawPlayerWithNameTag(playerData.name, playerData.position.x * SCALE + cameraOffsetX, playerData.position.y * SCALE + cameraOffsetY, playerData.colour)
+          drawPlayerWithNameTag(playerData.name, playerData.position.x * SCALE + cameraOffsetX, playerData.position.y * SCALE + cameraOffsetY, playerData.character)
         }
       }
     })

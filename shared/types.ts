@@ -6,7 +6,7 @@ export type Vec2 = {
 export type Player = {
   name: string
   position: Vec2
-  colour: string
+  character: string
   rubies: number
 }
 

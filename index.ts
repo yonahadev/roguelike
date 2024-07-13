@@ -58,7 +58,7 @@ io.on('connection', (socket:Socket) => {
   socket.on('playerData', (receivedClientData: Player) => {
     if (socket.id in gameData.playerData) {
       gameData.playerData[socket.id].position = receivedClientData.position
-      gameData.playerData[socket.id].colour = receivedClientData.colour
+      gameData.playerData[socket.id].character = receivedClientData.character
       gameData.playerData[socket.id].name = receivedClientData.name
     } else { 
       gameData.playerData[socket.id] = structuredClone(DEFAULT_PLAYER_DATA)
