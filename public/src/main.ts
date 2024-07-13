@@ -86,14 +86,6 @@ let getImage = (imageEnumNumber: number) => {
   return images[IMAGE_NAMES[imageEnumNumber]]
 }
 
-
-let drawPlayer = (x: number, y: number) => { 
-  if (context) { 
-    context.fillRect(x, y, SCALE, SCALE)
-  }
-  
-}
-
 let drawImage = (image:HTMLImageElement,x:number,y:number,width:number,height:number) => {
   if (image.complete && context) { 
     context.drawImage(image,x,y,SCALE*width,SCALE*height)
