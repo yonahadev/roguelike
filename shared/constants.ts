@@ -31,7 +31,7 @@ export enum ImageEnum {
   fireball,
 }
 
-
+export const collideableTiles = new Set([IMAGE_NAMES[ImageEnum.wall]])
 
 export const characterData: CharacterDictionary = { 
   fireCharacter: { 

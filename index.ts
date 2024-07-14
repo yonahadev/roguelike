@@ -17,13 +17,10 @@ const MAX_RUBIES = 10
 import { Socket } from "socket.io";
 import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageEnum, MAP_HEIGHT, MAP_WIDTH } from "./shared/constants";
 import { Player, Vec2 } from "./shared/types";
+import { getRandomInt } from './shared/utils';
 
 let gameData = structuredClone(DEFAULT_GAME_DATA)
 let tilemap:string[] = []
-
-let getRandomInt = (min:number, max:number) => { //max exclusive
-  return Math.floor(Math.random() * (max-min) + min)
-}
 
 
 let addRubies = () => { 

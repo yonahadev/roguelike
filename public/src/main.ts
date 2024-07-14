@@ -1,288 +1,24 @@
-import { io } from 'socket.io-client';
 import { characterData, DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageEnum, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
-import { Player, Projectile, Vec2 } from "../../shared/types";
 import './index.css';
+import { canvas, context, drawImage, drawPlayerWithNameTag, drawText, getImage, getTextDimensions, images } from "./modules/drawing";
+import { handleMovement } from "./modules/gameplay";
+import { canMove, resizeCanvas } from "./modules/input";
+import { gameData, localID, socket, tilemap } from "./modules/networking";
 
-const PLAYER_SPEED = 0.1
-const SCALE = 100
+export const PLAYER_SPEED = 0.1
+export const SCALE = 100
 
-let canvas: HTMLCanvasElement | null = document.getElementById("canvas") as HTMLCanvasElement
-canvas.style.visibility = 'hidden'
-let context: CanvasRenderingContext2D | null = null
-if (canvas) { 
-  context = canvas.getContext("2d")
-}
-
-let form:HTMLFormElement|null = document.getElementById("nameForm") as HTMLFormElement
-let inputQueue = new Set()
-let movementKeys = new Set(["w", "a", "s", "d"])
-
-
-const SERVER_URL = import.meta.env.VITE_SERVER_URL
-
-console.log(import.meta.env.BASE_URL)
-
-let socket = io(SERVER_URL)
 let lastSendTime = new Date().getTime()
 let lastUpdateTime = new Date().getTime()
-let gameData = structuredClone(DEFAULT_GAME_DATA)
-let localID: string
-let localPlayer = structuredClone(DEFAULT_PLAYER_DATA)
-let collectedRubies: string[] = []
-let projectiles: Projectile[] = []
+export let localPlayer = structuredClone(DEFAULT_PLAYER_DATA)
 
-let canMove = false
-
-let tilemap:string[] = []
-
-
-let collideableTiles = new Set([IMAGE_NAMES[ImageEnum.wall]])
-
-type imageDictionary = {
-  [key:string]:HTMLImageElement
-}
-let images:imageDictionary = {}
-
-for (let i = 0; i < IMAGE_NAMES.length; i++) { 
-  let imageName = IMAGE_NAMES[i]
-  let image = new Image()
-  let fullPath = `/${imageName}.png`
-  image.src = fullPath
-  console.log(imageName)
-  images[imageName] = image
-}
-
-form.addEventListener('submit', (event) => {
-  event.preventDefault()
-  form.style.visibility = 'hidden'
-  canvas.style.visibility = 'visible'
-  let nameInput = document.getElementById("nameInput") as HTMLInputElement
-  let name = nameInput.value
-  let colour = null
-  canMove = true
-  let colourRadioButtons = document.getElementsByName("colour")
-  for (let i = 0; i < colourRadioButtons.length; i++) { 
-    let radioElement = colourRadioButtons[i] as HTMLInputElement
-    if (radioElement.checked) { 
-      colour = radioElement.value
-    }
-  }
-  if (colour) { 
-    localPlayer.character = colour
-  }
-  if (name) { 
-    localPlayer.name = name
-  }
-
-})
-
-let resizeCanvas = () => {
-  canvas.width = window.innerWidth
-  canvas.height = window.innerHeight
-}
-
-let getImage = (imageEnumNumber: number) => { 
-  return images[IMAGE_NAMES[imageEnumNumber]]
-}
-
-let drawImage = (image:HTMLImageElement,x:number,y:number,width:number,height:number) => {
-  if (image.complete && context) { 
-    context.drawImage(image,x,y,SCALE*width,SCALE*height)
-  }
-}
-
-let drawText = (text:string, x:number, y:number) => { 
-  if (context) { 
-    context.font = `bold ${Math.floor(25*SCALE/100)}px arial`
-    context.fillText(String(text), x, y)
-  }
-
-}
-
-let getTextDimensions = (text: string) => { 
-  if (context) { 
-    let metrics = context.measureText(text)
-    return {x:metrics.width,y:metrics.fontBoundingBoxAscent}
-  }
-}
-let drawPlayerWithNameTag = (player: Player, x: number, y: number) => {
-  if (context) {
-    context.save();
-    context.translate(x + SCALE / 2, y + SCALE / 2); //gpt-saviour top left is the origin so move it to where the player is centered
-    context.rotate(player.orientation);
-    drawImage(images[player.character], -SCALE / 2, -SCALE / 2, 1, 1);
-    context.restore();
-    let textDimensions = getTextDimensions(player.name);
-    if (textDimensions) {
-      let width = textDimensions.x;
-      let verticalOffset = -5;
-      context.fillStyle = 'black';
-      drawText(player.name, x - width / 2 + SCALE / 2, y + verticalOffset);
-    }
-  }
-}
-  
-window.addEventListener('resize', resizeCanvas, false)
-
-document.addEventListener("keydown", (event) => { 
-  if (movementKeys.has(event.key)) { 
-    inputQueue.add(event.key)
-  }
-})
-
-document.addEventListener('mousedown', (event) => { 
-  console.log("Triggered projectile")
-  if (gameData.serverTime - localPlayer.attackLastFired > 1000) { 
-    let characterProperties = characterData['fireCharacter']
-    let projectileTemplate = characterProperties.projectile
-    let newProjectile = structuredClone(projectileTemplate)
-    newProjectile.timeProjected = gameData.serverTime
-    newProjectile.position = localPlayer.position
-    newProjectile.orientation = localPlayer.orientation
-    projectiles.push(newProjectile)
-    localPlayer.attackLastFired = gameData.serverTime
-  }
- 
-}) 
-
-document.addEventListener("mousemove", (event) => { 
-  let centerX = canvas.width/2
-  let centerY = canvas.height/2
-  let differenceX = centerX - event.clientX
-  let differenceY = centerY - event.clientY
-  let mouseAngle = Math.atan(-differenceX / differenceY)
-  if (differenceY < 0) { 
-    mouseAngle += Math.PI
-  }
-  localPlayer.orientation = mouseAngle
-})
-
-window.onblur = () => { 
-  inputQueue.clear()
-}
-
-document.addEventListener('focus', () => {
-  inputQueue.clear()
-})
-
-document.addEventListener("keyup", (event) => { 
-  if (movementKeys.has(event.key)) { 
-    inputQueue.delete(event.key)
-  }
-})
-
-let getTileAtPosition = (x:number,y:number) => { 
-  return tilemap[y*MAP_WIDTH+x]
-}
-
-
-let checkCollisions = (position1:Vec2,dimensions1:Vec2,position2:Vec2,dimensions2:Vec2) => {
-  return (position1.x < position2.x + dimensions2.x && 
-          position1.x + dimensions1.x > position2.x &&
-          position1.y < position2.y + dimensions2.y && 
-          position1.y + dimensions1.y > position2.y
-  )
-}
-
-let checkPlayerCollisions = () => { 
-  let pos = localPlayer.position
-  let topLeft = getTileAtPosition(Math.floor(pos.x), Math.floor(pos.y))
-  let topRight = getTileAtPosition(Math.floor(pos.x) + 1, Math.floor(pos.y))
-  let bottomLeft = getTileAtPosition(Math.floor(pos.x), Math.floor(pos.y)+1)
-  let bottomRight = getTileAtPosition(Math.floor(pos.x) + 1, Math.floor(pos.y) + 1)
-  return collideableTiles.has(topLeft) || collideableTiles.has(topRight) || collideableTiles.has(bottomLeft) || collideableTiles.has(bottomRight)
-}
-
-let handleRubyCollection = () => { 
-  Object.keys(gameData.rubyData).forEach((key:string) => { 
-    let position = JSON.parse(key)
-    let collision = checkCollisions(localPlayer.position, { x: 1, y: 1 }, position, { x: 1, y: 1 })
-
-    if (collision) { 
-      delete gameData.rubyData[key]
-      collectedRubies.push(key)
-    }
-  })
-}
-
-
-let handleMovement = () => { 
-  let input1 = [...inputQueue][0]
-  let input2 = [...inputQueue][1]
-  const diagonalSpeed = PLAYER_SPEED / Math.sqrt(2)
-  let amountToMove: Vec2 = {x:0,y:0}
-  switch (true) { 
-    case (input1 == "w" && input2 == undefined):
-      amountToMove.y -= PLAYER_SPEED
-      break
-    case (input1 == "a" && input2 == undefined):
-      amountToMove.x -= PLAYER_SPEED
-      break
-    case (input1 == "s" && input2 == undefined):
-      amountToMove.y += PLAYER_SPEED
-      break
-    case (input1 == "d" && input2 == undefined):
-      amountToMove.x += PLAYER_SPEED
-      break
-    case (input1 == "w" && input2 == "d" || input2 == "w" && input1 == "d"):
-      amountToMove.x += diagonalSpeed
-      amountToMove.y -= diagonalSpeed
-      break
-    case (input1 == "w" && input2 == "a" || input2 == "w" && input1 == "a"):
-      amountToMove.x -= diagonalSpeed
-      amountToMove.y -= diagonalSpeed
-      break
-    case (input1 == "s" && input2 == "a" || input2 == "s" && input1 == "a"):
-      amountToMove.x -= diagonalSpeed
-      amountToMove.y += diagonalSpeed
-      break
-    case (input1 == "s" && input2 == "d" || input2 == "s" && input1 == "d"):
-      amountToMove.x += diagonalSpeed
-      amountToMove.y += diagonalSpeed
-      break
-  }
-  localPlayer.position.x += amountToMove.x
-  if (checkPlayerCollisions()) { 
-    if (amountToMove.x < 0) {
-      localPlayer.position.x -= amountToMove.x
-      localPlayer.position.x = Math.floor(localPlayer.position.x)
-    } else { 
-      localPlayer.position.x -= amountToMove.x
-      localPlayer.position.x = Math.floor(localPlayer.position.x)+0.999
-    }
-  }
-  localPlayer.position.y += amountToMove.y
-  if (checkPlayerCollisions()) {
-    if (amountToMove.y < 0) {
-      localPlayer.position.y -= amountToMove.y
-      localPlayer.position.y = Math.floor(localPlayer.position.y)
-    } else { 
-      localPlayer.position.y -= amountToMove.y
-      localPlayer.position.y = Math.floor(localPlayer.position.y)+0.999
-    }
-  }
-}
-
-socket.on('id', (id) => { 
-  localID = id
-  console.log('localID:',localID)
-})
-socket.on('gameData', (gameDataFromServer) => { 
-  gameData = gameDataFromServer
-  let localPlayerFromServer = gameData.playerData[localID]
-  localPlayer.rubies = localPlayerFromServer.rubies
-})
-
-socket.on('tilemap', (receivedTilemap) => { 
-  tilemap = receivedTilemap
-})
-
-
+// export let projectiles: Projectile[] = []
+// let collectedRubies: string[] = []
 
 let renderFunction = () => {
-  if (context) {
-    let playerData = gameData.playerData
+  if (context && canvas) {
 
+    let playerData = gameData.playerData
     window.requestAnimationFrame(renderFunction)
     context.clearRect(0, 0, canvas.width, canvas.height)
     let offsetX = (canvas.width - SCALE) / 2
@@ -302,14 +38,14 @@ let renderFunction = () => {
     }
     drawPlayerWithNameTag(localPlayer, offsetX, offsetY)
 
-    let rubyString = `rubies: ${localPlayer.rubies}`
-    let rubyTextDimensions = getTextDimensions(rubyString)
-    if (rubyTextDimensions) {
-      let height = rubyTextDimensions.y
-      let width = rubyTextDimensions.x
-      drawText(rubyString, canvas.width - width - 50, height + 50)
-      drawImage(getImage(ImageEnum.ruby), canvas.width - width - SCALE - 10, height + 10, 0.5, 0.5)
-    }
+    // let rubyString = `rubies: ${localPlayer.rubies}`
+    // let rubyTextDimensions = getTextDimensions(rubyString)
+    // if (rubyTextDimensions) {
+    //   let height = rubyTextDimensions.y
+    //   let width = rubyTextDimensions.x
+    //   drawText(rubyString, canvas.width - width - 50, height + 50)
+    //   drawImage(getImage(ImageEnum.ruby), canvas.width - width - SCALE - 10, height + 10, 0.5, 0.5)
+    // }
 
     Object.entries(playerData).forEach(([playerID, playerData]) => {
       if (playerID != localID && playerID && playerData) {
@@ -319,44 +55,35 @@ let renderFunction = () => {
       }
     })
 
-    for (let i = 0; i < projectiles.length; i++) { 
-      let projectile = projectiles[i]
-      let timeSinceFired = gameData.serverTime - projectile.timeProjected
-      if (timeSinceFired < projectile.lifetime) {
-        // console.log("firing projectile")
-        let pheta = projectile.orientation
-        let positionX = Math.sin(pheta)*projectile.velocity*timeSinceFired
-        let positionY = -Math.cos(pheta) * projectile.velocity * timeSinceFired
-        console.log(positionX,positionY)
-        drawImage(getImage(ImageEnum.fireball),positionX+offsetX,positionY+offsetY,1,1)
-      } else { 
-        projectiles.splice(i,1)
-      }
-    }
-    // let timeSinceFired = gameData.serverTime - localPlayer.attackLastFired
-    // let char = characterData['fireCharacter']
-    // if (timeSinceFired < char.attackLifetime) { 
-    //   console.log("drawing attack")
-    //   let position = timeSinceFired
-    //   drawImage(getImage(ImageEnum.fireball),position,5,0.5,0.5)
+    // for (let i = 0; i < projectiles.length; i++) { 
+    //   let projectile = projectiles[i]
+    //   let timeSinceFired = gameData.serverTime - projectile.timeProjected
+    //   if (timeSinceFired < projectile.lifetime) {
+    //     // console.log("firing projectile")
+    //     let pheta = projectile.orientation
+    //     let positionX = Math.sin(pheta)*projectile.velocity*timeSinceFired
+    //     let positionY = -Math.cos(pheta) * projectile.velocity * timeSinceFired
+    //     console.log(positionX,positionY)
+    //     drawImage(getImage(ImageEnum.fireball),positionX+offsetX,positionY+offsetY,1,1)
+    //   } else { 
+    //     projectiles.splice(i,1)
+    //   }
     // }
-
-    let players = Object.keys(gameData.playerData)
-    let height = 0
-    for (let i = 0; i < players.length; i++) {
-      let player = gameData.playerData[players[i]]
-      let text = `${player.name} rubies: ${player.rubies}`
-      let dimensions = getTextDimensions(text)
-      if (dimensions) { 
-        drawText(text, 0, height+50)
-        height += dimensions.y
-      } 
-    }
-
-    Object.keys(gameData.rubyData).forEach((key:string) => { 
-      let position = JSON.parse(key)
-      drawImage(getImage(ImageEnum.ruby), position.x*SCALE+Math.floor(cameraOffsetX),position.y*SCALE+Math.floor(cameraOffsetY), 1, 1)
-    })
+    // let players = Object.keys(gameData.playerData)
+    // let height = 0
+    // for (let i = 0; i < players.length; i++) {
+    //   let player = gameData.playerData[players[i]]
+    //   let text = `${player.name} rubies: ${player.rubies}`
+    //   let dimensions = getTextDimensions(text)
+    //   if (dimensions) { 
+    //     drawText(text, 0, height+50)
+    //     height += dimensions.y
+    //   } 
+    // }
+    // Object.keys(gameData.rubyData).forEach((key:string) => { 
+    //   let position = JSON.parse(key)
+    //   drawImage(getImage(ImageEnum.ruby), position.x*SCALE+Math.floor(cameraOffsetX),position.y*SCALE+Math.floor(cameraOffsetY), 1, 1)
+    // })
 
     let currentTime = new Date().getTime()
     let timeSinceUpdate = currentTime - lastUpdateTime
@@ -364,17 +91,17 @@ let renderFunction = () => {
     if (timeSinceSend > 16.67) { 
       lastSendTime = currentTime
       socket.emit('playerData', localPlayer)
-      if (collectedRubies.length > 0) { 
-        socket.emit('collectedRubies', collectedRubies)
-        collectedRubies = []
-      }
+      // if (collectedRubies.length > 0) { 
+      //   socket.emit('collectedRubies', collectedRubies)
+      //   collectedRubies = []
+      // }
 
     }
     if (timeSinceUpdate > 16.67) {
       lastUpdateTime = currentTime
       if (canMove) { 
         handleMovement()
-        handleRubyCollection()
+        // handleRubyCollection()
       }
 
     }
