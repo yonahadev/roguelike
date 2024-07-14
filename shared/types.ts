@@ -6,8 +6,29 @@ export type Vec2 = {
 export type Player = {
   name: string
   position: Vec2
+  orientation: number
   character: string
   rubies: number
+  attackLastFired: number
+}
+
+export type Projectile = {
+  velocity: number
+  position: Vec2
+  lifetime: number
+  timeProjected: number
+  orientation: number
+}
+
+export type Character = {
+  attackCooldown: number
+  hp: number
+  projectile: Projectile
+}
+
+
+export type CharacterDictionary = {
+  [key:string]:Character
 }
 
 export type PlayerDictionary = {
@@ -20,5 +41,6 @@ export type RubyDictionary = {
 
 export type GameDictionary = {
   playerData: PlayerDictionary,
-  rubyData: RubyDictionary
+  rubyData: RubyDictionary,
+  serverTime: number
 }

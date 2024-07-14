@@ -1,6 +1,6 @@
 import { io } from 'socket.io-client';
-import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageEnum, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
-import { Vec2 } from "../../shared/types";
+import { characterData, DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageEnum, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
+import { Player, Projectile, Vec2 } from "../../shared/types";
 import './index.css';
 
 const PLAYER_SPEED = 0.1
@@ -29,8 +29,7 @@ let gameData = structuredClone(DEFAULT_GAME_DATA)
 let localID: string
 let localPlayer = structuredClone(DEFAULT_PLAYER_DATA)
 let collectedRubies: string[] = []
-
-let mouseAngle = 0
+let projectiles: Projectile[] = []
 
 let canMove = false
 
@@ -106,19 +105,19 @@ let getTextDimensions = (text: string) => {
     return {x:metrics.width,y:metrics.fontBoundingBoxAscent}
   }
 }
-let drawPlayerWithNameTag = (nameTag: string, x: number, y: number, character: string) => {
+let drawPlayerWithNameTag = (player: Player, x: number, y: number) => {
   if (context) {
     context.save();
     context.translate(x + SCALE / 2, y + SCALE / 2); //gpt-saviour top left is the origin so move it to where the player is centered
-    context.rotate(mouseAngle);
-    drawImage(images[character], -SCALE / 2, -SCALE / 2, 1, 1);
+    context.rotate(player.orientation);
+    drawImage(images[player.character], -SCALE / 2, -SCALE / 2, 1, 1);
     context.restore();
-    let textDimensions = getTextDimensions(nameTag);
+    let textDimensions = getTextDimensions(player.name);
     if (textDimensions) {
       let width = textDimensions.x;
       let verticalOffset = -5;
       context.fillStyle = 'black';
-      drawText(nameTag, x - width / 2 + SCALE / 2, y + verticalOffset);
+      drawText(player.name, x - width / 2 + SCALE / 2, y + verticalOffset);
     }
   }
 }
@@ -131,17 +130,31 @@ document.addEventListener("keydown", (event) => {
   }
 })
 
+document.addEventListener('mousedown', (event) => { 
+  console.log("Triggered projectile")
+  if (gameData.serverTime - localPlayer.attackLastFired > 1000) { 
+    let characterProperties = characterData['fireCharacter']
+    let projectileTemplate = characterProperties.projectile
+    let newProjectile = structuredClone(projectileTemplate)
+    newProjectile.timeProjected = gameData.serverTime
+    newProjectile.position = localPlayer.position
+    newProjectile.orientation = localPlayer.orientation
+    projectiles.push(newProjectile)
+    localPlayer.attackLastFired = gameData.serverTime
+  }
+ 
+}) 
+
 document.addEventListener("mousemove", (event) => { 
   let centerX = canvas.width/2
   let centerY = canvas.height/2
   let differenceX = centerX - event.clientX
   let differenceY = centerY - event.clientY
-  console.log("diffX", differenceX, "diffY", differenceY)
-  mouseAngle = Math.atan(-differenceX / differenceY)
+  let mouseAngle = Math.atan(-differenceX / differenceY)
   if (differenceY < 0) { 
     mouseAngle += Math.PI
   }
-  console.log(mouseAngle)
+  localPlayer.orientation = mouseAngle
 })
 
 window.onblur = () => { 
@@ -287,12 +300,7 @@ let renderFunction = () => {
         drawImage(image, x, y, 1, 1)
       }
     }
-
- 
-    
-    
-
-    drawPlayerWithNameTag(localPlayer.name, offsetX, offsetY, localPlayer.character)
+    drawPlayerWithNameTag(localPlayer, offsetX, offsetY)
 
     let rubyString = `rubies: ${localPlayer.rubies}`
     let rubyTextDimensions = getTextDimensions(rubyString)
@@ -306,10 +314,32 @@ let renderFunction = () => {
     Object.entries(playerData).forEach(([playerID, playerData]) => {
       if (playerID != localID && playerID && playerData) {
         if (playerData) {
-          drawPlayerWithNameTag(playerData.name, playerData.position.x * SCALE + cameraOffsetX, playerData.position.y * SCALE + cameraOffsetY, playerData.character)
+          drawPlayerWithNameTag(playerData, playerData.position.x * SCALE + cameraOffsetX, playerData.position.y * SCALE + cameraOffsetY)
         }
       }
     })
+
+    for (let i = 0; i < projectiles.length; i++) { 
+      let projectile = projectiles[i]
+      let timeSinceFired = gameData.serverTime - projectile.timeProjected
+      if (timeSinceFired < projectile.lifetime) {
+        // console.log("firing projectile")
+        let pheta = projectile.orientation
+        let positionX = Math.sin(pheta)*projectile.velocity*timeSinceFired
+        let positionY = -Math.cos(pheta) * projectile.velocity * timeSinceFired
+        console.log(positionX,positionY)
+        drawImage(getImage(ImageEnum.fireball),positionX+offsetX,positionY+offsetY,1,1)
+      } else { 
+        projectiles.splice(i,1)
+      }
+    }
+    // let timeSinceFired = gameData.serverTime - localPlayer.attackLastFired
+    // let char = characterData['fireCharacter']
+    // if (timeSinceFired < char.attackLifetime) { 
+    //   console.log("drawing attack")
+    //   let position = timeSinceFired
+    //   drawImage(getImage(ImageEnum.fireball),position,5,0.5,0.5)
+    // }
 
     let players = Object.keys(gameData.playerData)
     let height = 0

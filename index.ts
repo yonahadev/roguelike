@@ -60,6 +60,8 @@ io.on('connection', (socket:Socket) => {
       gameData.playerData[socket.id].position = receivedClientData.position
       gameData.playerData[socket.id].character = receivedClientData.character
       gameData.playerData[socket.id].name = receivedClientData.name
+      gameData.playerData[socket.id].orientation = receivedClientData.orientation
+      gameData.playerData[socket.id].attackLastFired = receivedClientData.attackLastFired
     } else { 
       gameData.playerData[socket.id] = structuredClone(DEFAULT_PLAYER_DATA)
     }
@@ -83,15 +85,17 @@ io.on('connection', (socket:Socket) => {
   })
 })
 
-server.listen(process.env.PORT, () => {
-  console.log('listening on',process.env.PORT);
+server.listen(PORT, () => {
+  console.log('listening on',PORT);
 });
 
 setInterval(() => { 
+  gameData.serverTime += 16.67
   io.emit('gameData',gameData)
 }, 16.67)
 
 setInterval(() => {
   addRubies()
   console.log(gameData.playerData)
+  console.log("Server Time:",gameData.serverTime)
 }, 5000);
