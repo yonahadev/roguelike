@@ -1,5 +1,4 @@
 import { MAP_WIDTH } from "./constants"
-import { Vec2 } from "./types"
 
 export const getTileAtPosition = (array: string[],x:number,y:number) => { 
   return array[y*MAP_WIDTH+x]
