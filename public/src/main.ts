@@ -1,6 +1,6 @@
-import { characterData, DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageEnum, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
+import { DEFAULT_PLAYER_DATA, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
 import './index.css';
-import { canvas, context, drawImage, drawPlayerWithNameTag, drawText, getImage, getTextDimensions, images } from "./modules/drawing";
+import { canvas, context, drawImage, drawPlayerWithNameTag, images } from "./modules/drawing";
 import { handleMovement } from "./modules/gameplay";
 import { canMove, resizeCanvas } from "./modules/input";
 import { gameData, interpolatedPlayerData, interpolatePositions, localID, socket, tilemap } from "./modules/networking";

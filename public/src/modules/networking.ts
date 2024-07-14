@@ -1,6 +1,6 @@
 import { io } from "socket.io-client"
 import { DEFAULT_GAME_DATA, TICK_MS } from "../../../shared/constants"
-import { GameDictionary, Player, PlayerDictionary } from "../../../shared/types"
+import { GameDictionary, PlayerDictionary } from "../../../shared/types"
 import { renderTime } from "../main"
 
 export let gameData: GameDictionary[] = [structuredClone(DEFAULT_GAME_DATA)]
@@ -19,7 +19,7 @@ export let localID: string
 let clientLastUpdateTime = 0
 let lastInterpolatedTime = 0
 
-let interpolationCount = 50
+let interpolationCount = 10
 
 socket.on('id', (id) => { 
   localID = id
