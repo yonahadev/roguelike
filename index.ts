@@ -14,8 +14,9 @@ const io = new Server(server, {
 const PORT = process.env.PORT
 const MAX_RUBIES = 10
 
+
 import { Socket } from "socket.io";
-import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageEnum, MAP_HEIGHT, MAP_WIDTH } from "./shared/constants";
+import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageEnum, MAP_HEIGHT, MAP_WIDTH, TICK_MS } from "./shared/constants";
 import { Player, Vec2 } from "./shared/types";
 import { getRandomInt } from './shared/utils';
 
@@ -65,16 +66,16 @@ io.on('connection', (socket:Socket) => {
 
   })
 
-  socket.on('collectedRubies', (collectedRubies) => { 
-    for (let i = 0; i < collectedRubies.length; i++) {
-      let ruby = collectedRubies[i]
-      if (gameData.rubyData[ruby]) {
-        gameData.playerData[socket.id].rubies += 1
-        delete gameData.rubyData[ruby]
-      }
+  // socket.on('collectedRubies', (collectedRubies) => { 
+  //   for (let i = 0; i < collectedRubies.length; i++) {
+  //     let ruby = collectedRubies[i]
+  //     if (gameData.rubyData[ruby]) {
+  //       gameData.playerData[socket.id].rubies += 1
+  //       delete gameData.rubyData[ruby]
+  //     }
 
-    }
-  })
+  //   }
+  // })
 
   socket.on('disconnect', () => { 
     console.log(socket.id, 'disconnected')
@@ -87,12 +88,12 @@ server.listen(PORT, () => {
 });
 
 setInterval(() => { 
-  gameData.serverTime += 16.67
+  gameData.serverTime += TICK_MS
   io.emit('gameData',gameData)
-}, 16.67)
+}, TICK_MS)
 
 setInterval(() => {
-  addRubies()
+  // addRubies()
   console.log(gameData.playerData)
   console.log("Server Time:",gameData.serverTime)
 }, 5000);

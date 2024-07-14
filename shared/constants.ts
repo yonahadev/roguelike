@@ -3,6 +3,9 @@ import { CharacterDictionary, GameDictionary, Player } from "./types"
 export const MAP_WIDTH = 20
 export const MAP_HEIGHT = 20
 
+export const TICK_RATE = 2
+export const TICK_MS = 1000/TICK_RATE
+
 export const DEFAULT_GAME_DATA:GameDictionary = {
   playerData: {},
   rubyData: {},

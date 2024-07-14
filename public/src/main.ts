@@ -3,7 +3,7 @@ import './index.css';
 import { canvas, context, drawImage, drawPlayerWithNameTag, drawText, getImage, getTextDimensions, images } from "./modules/drawing";
 import { handleMovement } from "./modules/gameplay";
 import { canMove, resizeCanvas } from "./modules/input";
-import { gameData, localID, socket, tilemap } from "./modules/networking";
+import { gameData, interpolatedPlayerData, interpolatePositions, localID, socket, tilemap } from "./modules/networking";
 
 export const PLAYER_SPEED = 0.1
 export const SCALE = 100
@@ -12,13 +12,14 @@ let lastSendTime = new Date().getTime()
 let lastUpdateTime = new Date().getTime()
 export let localPlayer = structuredClone(DEFAULT_PLAYER_DATA)
 
+export let renderTime = 0
+
 // export let projectiles: Projectile[] = []
 // let collectedRubies: string[] = []
 
-let renderFunction = () => {
+let renderFunction = (time: number) => {
+  renderTime = time
   if (context && canvas) {
-
-    let playerData = gameData.playerData
     window.requestAnimationFrame(renderFunction)
     context.clearRect(0, 0, canvas.width, canvas.height)
     let offsetX = (canvas.width - SCALE) / 2
@@ -47,13 +48,17 @@ let renderFunction = () => {
     //   drawImage(getImage(ImageEnum.ruby), canvas.width - width - SCALE - 10, height + 10, 0.5, 0.5)
     // }
 
-    Object.entries(playerData).forEach(([playerID, playerData]) => {
-      if (playerID != localID && playerID && playerData) {
-        if (playerData) {
-          drawPlayerWithNameTag(playerData, playerData.position.x * SCALE + cameraOffsetX, playerData.position.y * SCALE + cameraOffsetY)
+    if (gameData.length >= 2) {
+      interpolatePositions(time)
+      Object.entries(interpolatedPlayerData).forEach(([playerID, interpolatedPlayerData]) => {
+        if (playerID != localID && playerID && interpolatedPlayerData) {
+          if (interpolatedPlayerData) {
+            drawPlayerWithNameTag(interpolatedPlayerData, interpolatedPlayerData.position.x * SCALE + cameraOffsetX, interpolatedPlayerData.position.y * SCALE + cameraOffsetY)
+          }
         }
-      }
-    })
+      })
+    }
+
 
     // for (let i = 0; i < projectiles.length; i++) { 
     //   let projectile = projectiles[i]
