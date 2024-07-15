@@ -1,63 +1,70 @@
 import { io } from "socket.io-client"
-import { DEFAULT_GAME_DATA, TICK_MS } from "../../../shared/constants"
-import { GameDictionary, PlayerDictionary } from "../../../shared/types"
+import { DEFAULT_GAME_DATA } from "../../../shared/constants"
+import { GameDictionary, PlayerDictionary, Projectile } from "../../../shared/types"
 import { renderTime } from "../main"
 
-export let gameData: GameDictionary[] = [structuredClone(DEFAULT_GAME_DATA)]
+export let gameDataArray: GameDictionary[] = [structuredClone(DEFAULT_GAME_DATA)]
+export let gameData:GameDictionary
 export let interpolatedPlayerData: PlayerDictionary
 export let tilemap: string[] = []
-let oldData: PlayerDictionary
-let newData: PlayerDictionary
+let oldPlayerData: PlayerDictionary
+let newPlayerData: PlayerDictionary
 
 const SERVER_URL = import.meta.env.VITE_SERVER_URL
 export const socket = io(SERVER_URL)
 
 export let localID: string
 
+export let clientPingedTime = 0
+export let timeSinceClientPinged = 0
 
 
-let clientLastUpdateTime = 0
 let lastInterpolatedTime = 0
-
+let timeBetweenData = 0
 let interpolationCount = 10
 
 socket.on('id', (id) => { 
   localID = id
   console.log('localID:',localID)
 })
-socket.on('gameData', (gameDataFromServer) => { 
-  clientLastUpdateTime = renderTime
-  gameData.push(gameDataFromServer)
-  if (gameData.length > 5) { 
-    gameData.splice(0,1)
-  }  
-  if (gameData.length >= 2) { 
-    oldData = structuredClone(gameData[gameData.length-2].playerData)
-    newData = structuredClone(gameData[gameData.length-1].playerData)
-    interpolatedPlayerData = structuredClone(oldData)
-  }
 
+socket.on('gameData', (gameDataFromServer) => { 
+  clientPingedTime = renderTime
+  gameDataArray.push(gameDataFromServer)
+  if (gameDataArray.length > 5) { 
+    gameDataArray.splice(0,1)
+  }  
+  if (gameDataArray.length >= 2) { 
+    let oldGameData = gameDataArray[gameDataArray.length-2]
+    gameData = gameDataArray[gameDataArray.length-1]
+    oldPlayerData = structuredClone(oldGameData.playerData)
+    newPlayerData = structuredClone(gameData.playerData)
+    interpolatedPlayerData = structuredClone(oldPlayerData)
+    timeBetweenData = gameData.serverTime-oldGameData.serverTime
+  }
 })
 
 socket.on('tilemap', (receivedTilemap) => { 
   tilemap = receivedTilemap
 })
 
-export const interpolatePositions = (time: number) => {
-  let timeSinceUpdate = time - clientLastUpdateTime
-  if (time-lastInterpolatedTime > TICK_MS / interpolationCount) { 
-    Object.keys(interpolatedPlayerData).forEach((id) => { 
-      if (id != localID) { 
-        let pos = interpolatedPlayerData[id].position
-        let differenceX = newData[id].position.x - oldData[id].position.x
-        let differenceY = newData[id].position.y - oldData[id].position.y
-        pos.x = oldData[id].position.x + timeSinceUpdate*differenceX/TICK_MS
-        pos.y = oldData[id].position.y + timeSinceUpdate*differenceY/TICK_MS
-        console.log(timeSinceUpdate)
-        lastInterpolatedTime = time
-      }
+export const fireProjectile = (projectile:Projectile) => { 
+  socket.emit("projectile",projectile)
+}
 
-      
-  })
+export const interpolatePositions = (id:string) => {
+  timeSinceClientPinged = renderTime - clientPingedTime
+  if (renderTime - lastInterpolatedTime > timeBetweenData / interpolationCount) { 
+    let pos = interpolatedPlayerData[id].position
+    let differenceX = newPlayerData[id].position.x - oldPlayerData[id].position.x
+    let differenceY = newPlayerData[id].position.y - oldPlayerData[id].position.y
+    pos.x = oldPlayerData[id].position.x + timeSinceClientPinged*differenceX/timeBetweenData
+    pos.y = oldPlayerData[id].position.y + timeSinceClientPinged*differenceY/timeBetweenData
+    
+    let differencePheta = newPlayerData[id].orientation - oldPlayerData[id].orientation
+    if (Math.abs(differencePheta) < 1) {
+      interpolatedPlayerData[id].orientation = oldPlayerData[id].orientation + timeSinceClientPinged * differencePheta / timeBetweenData
+    }
+    lastInterpolatedTime = renderTime
   }
 }

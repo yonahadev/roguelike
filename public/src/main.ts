@@ -3,7 +3,7 @@ import './index.css';
 import { canvas, context, drawImage, drawPlayerWithNameTag, images } from "./modules/drawing";
 import { handleMovement } from "./modules/gameplay";
 import { canMove, resizeCanvas } from "./modules/input";
-import { gameData, interpolatedPlayerData, interpolatePositions, localID, socket, tilemap } from "./modules/networking";
+import { gameData, gameDataArray, interpolatedPlayerData, interpolatePositions, localID, socket, tilemap } from "./modules/networking";
 
 export const PLAYER_SPEED = 0.1
 export const SCALE = 100
@@ -48,11 +48,11 @@ let renderFunction = (time: number) => {
     //   drawImage(getImage(ImageEnum.ruby), canvas.width - width - SCALE - 10, height + 10, 0.5, 0.5)
     // }
 
-    if (gameData.length >= 2) {
-      interpolatePositions(time)
+    if (gameDataArray.length >= 2) {
       Object.entries(interpolatedPlayerData).forEach(([playerID, interpolatedPlayerData]) => {
         if (playerID != localID && playerID && interpolatedPlayerData) {
           if (interpolatedPlayerData) {
+            interpolatePositions(playerID)
             drawPlayerWithNameTag(interpolatedPlayerData, interpolatedPlayerData.position.x * SCALE + cameraOffsetX, interpolatedPlayerData.position.y * SCALE + cameraOffsetY)
           }
         }
@@ -60,7 +60,7 @@ let renderFunction = (time: number) => {
     }
 
 
-    // for (let i = 0; i < projectiles.length; i++) { 
+    // for (let i = 0; i < projectiles.length; i++) { actual drawing of projecitle
     //   let projectile = projectiles[i]
     //   let timeSinceFired = gameData.serverTime - projectile.timeProjected
     //   if (timeSinceFired < projectile.lifetime) {
