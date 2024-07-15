@@ -1,4 +1,5 @@
 import { characterData } from "../../../shared/constants"
+import { Projectile } from "../../../shared/types"
 import { localPlayer } from "../main"
 import { canvas } from "./drawing"
 import { fireProjectile, gameData, localID, timeSinceClientPinged } from "./networking"
@@ -8,6 +9,8 @@ export let inputQueue = new Set()
 const movementKeys = new Set(["w", "a", "s", "d"])
 let form: HTMLFormElement | null = document.getElementById("nameForm") as HTMLFormElement
 export let canMove = false
+
+export let clientProjectiles:Projectile[] = []
 
 form.addEventListener('submit', (event) => {
   if (canvas) { 
@@ -73,7 +76,7 @@ document.addEventListener('mousedown', () => {
       projectile.owner = localID
       localPlayer.attackLastFired = gameData.serverTime
       fireProjectile(projectile)
-      console.log("fired projectile")
+      clientProjectiles.push(projectile)
     }
   }
 }) 

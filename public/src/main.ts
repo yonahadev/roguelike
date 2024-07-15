@@ -2,7 +2,7 @@ import { DEFAULT_PLAYER_DATA, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constan
 import './index.css';
 import { canvas, context, drawImage, drawPlayerWithNameTag, getImage, images } from "./modules/drawing";
 import { calculateProjectilePosition, handleMovement } from "./modules/gameplay";
-import { canMove, resizeCanvas } from "./modules/input";
+import { canMove, clientProjectiles, resizeCanvas } from "./modules/input";
 import { gameData, gameDataArray, interpolatedPlayerData, interpolatePositions, localID, socket, tilemap } from "./modules/networking";
 
 export const PLAYER_SPEED = 0.1
@@ -64,8 +64,16 @@ let renderFunction = (time: number) => {
         let position = calculateProjectilePosition(projectile)
         let ownerPosition = interpolatedPlayerData[projectile.owner].position
         drawImage(getImage(projectile.image), (position.x+ownerPosition.x)*SCALE+cameraOffsetX, (position.y+ownerPosition.y)*SCALE+cameraOffsetY, 1, 1)
-        console.log(position)
       }
+    }
+    for (let i = 0; i < clientProjectiles.length; i++ ) { 
+      let projectile = clientProjectiles[i]
+      let position = calculateProjectilePosition(projectile)
+      drawImage(getImage(projectile.image), position.x * SCALE + offsetX, position.y * SCALE + offsetY, 1, 1)
+      if (gameData.serverTime - projectile.timeProjected > projectile.lifetime) { 
+        clientProjectiles.splice(i,1)
+      }
+      console.log(projectile)
     }
     // let players = Object.keys(gameData.playerData)
     // let height = 0

@@ -13,8 +13,7 @@ export const checkCollisions = (position1:Vec2,dimensions1:Vec2,position2:Vec2,d
   )
 }
 
-export const checkPlayerCollisions = () => { 
-  let pos = localPlayer.position
+export const checkTileCollision = (pos:Vec2) => { 
   let topLeft = getTileAtPosition(tilemap,Math.floor(pos.x), Math.floor(pos.y))
   let topRight = getTileAtPosition(tilemap,Math.floor(pos.x) + 1, Math.floor(pos.y))
   let bottomLeft = getTileAtPosition(tilemap,Math.floor(pos.x), Math.floor(pos.y)+1)
@@ -77,7 +76,7 @@ export const handleMovement = () => {
       break
   }
   localPlayer.position.x += amountToMove.x
-  if (checkPlayerCollisions()) { 
+  if (checkTileCollision(localPlayer.position)) { 
     if (amountToMove.x < 0) {
       localPlayer.position.x -= amountToMove.x
       localPlayer.position.x = Math.floor(localPlayer.position.x)
@@ -87,7 +86,7 @@ export const handleMovement = () => {
     }
   }
   localPlayer.position.y += amountToMove.y
-  if (checkPlayerCollisions()) {
+  if (checkTileCollision(localPlayer.position)) {
     if (amountToMove.y < 0) {
       localPlayer.position.y -= amountToMove.y
       localPlayer.position.y = Math.floor(localPlayer.position.y)
