@@ -3,7 +3,7 @@ import './index.css';
 import { canvas, context, drawImage, drawPlayerWithNameTag, getImage, images } from "./modules/drawing";
 import { calculateProjectilePosition, handleMovement } from "./modules/gameplay";
 import { canMove, clientProjectiles, resizeCanvas } from "./modules/input";
-import { gameData, gameDataArray, interpolatedPlayerData, interpolatePositions, localID, socket, tilemap } from "./modules/networking";
+import { clientPingedTime, gameData, gameDataArray, interpolatedPlayerData, interpolatePositions, localID, socket, tilemap } from "./modules/networking";
 
 export const PLAYER_SPEED = 0.1
 export const SCALE = 100
@@ -13,12 +13,14 @@ let lastUpdateTime = new Date().getTime()
 export let localPlayer = structuredClone(DEFAULT_PLAYER_DATA)
 
 export let renderTime = 0
+export let timeSinceClientPinged = 0
 
 // export let projectiles: Projectile[] = []
 // let collectedRubies: string[] = []
 
 let renderFunction = (time: number) => {
   renderTime = time
+  timeSinceClientPinged = renderTime-clientPingedTime
   if (context && canvas) {
     window.requestAnimationFrame(renderFunction)
     context.clearRect(0, 0, canvas.width, canvas.height)
@@ -63,7 +65,8 @@ let renderFunction = (time: number) => {
       if (projectile.owner != localID) { 
         let position = calculateProjectilePosition(projectile)
         let ownerPosition = interpolatedPlayerData[projectile.owner].position
-        drawImage(getImage(projectile.image), (position.x+ownerPosition.x)*SCALE+cameraOffsetX, (position.y+ownerPosition.y)*SCALE+cameraOffsetY, 1, 1)
+        drawImage(getImage(projectile.image), (position.x + ownerPosition.x) * SCALE + cameraOffsetX, (position.y + ownerPosition.y) * SCALE + cameraOffsetY, 1, 1)
+        console.log("Projectile from:",projectile.owner)
       }
     }
     for (let i = 0; i < clientProjectiles.length; i++ ) { 
@@ -73,7 +76,7 @@ let renderFunction = (time: number) => {
       if (gameData.serverTime - projectile.timeProjected > projectile.lifetime) { 
         clientProjectiles.splice(i,1)
       }
-      console.log(projectile)
+      console.log(position.x,position.y)
     }
     // let players = Object.keys(gameData.playerData)
     // let height = 0

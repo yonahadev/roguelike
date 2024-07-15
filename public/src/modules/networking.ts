@@ -1,7 +1,7 @@
 import { io } from "socket.io-client"
 import { DEFAULT_GAME_DATA } from "../../../shared/constants"
 import { GameDictionary, PlayerDictionary, Projectile } from "../../../shared/types"
-import { renderTime } from "../main"
+import { renderTime, timeSinceClientPinged } from "../main"
 
 export let gameDataArray: GameDictionary[] = [structuredClone(DEFAULT_GAME_DATA)]
 export let gameData:GameDictionary
@@ -16,7 +16,6 @@ export const socket = io(SERVER_URL)
 export let localID: string
 
 export let clientPingedTime = 0
-export let timeSinceClientPinged = 0
 
 
 let lastInterpolatedTime = 0
@@ -53,7 +52,6 @@ export const fireProjectile = (projectile:Projectile) => {
 }
 
 export const interpolatePositions = (id:string) => {
-  timeSinceClientPinged = renderTime - clientPingedTime
   if (renderTime - lastInterpolatedTime > timeBetweenData / interpolationCount) { 
     let pos = interpolatedPlayerData[id].position
     let differenceX = newPlayerData[id].position.x - oldPlayerData[id].position.x

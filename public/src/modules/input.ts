@@ -1,8 +1,8 @@
 import { characterData } from "../../../shared/constants"
 import { Projectile } from "../../../shared/types"
-import { localPlayer } from "../main"
+import { localPlayer, timeSinceClientPinged } from "../main"
 import { canvas } from "./drawing"
-import { fireProjectile, gameData, localID, timeSinceClientPinged } from "./networking"
+import { fireProjectile, gameData, localID } from "./networking"
 
 
 export let inputQueue = new Set()

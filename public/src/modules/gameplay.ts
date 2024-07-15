@@ -1,9 +1,9 @@
 import { collideableTiles } from "../../../shared/constants"
 import { Projectile, Vec2 } from "../../../shared/types"
 import { getTileAtPosition } from "../../../shared/utils"
-import { localPlayer, PLAYER_SPEED } from "../main"
+import { localPlayer, PLAYER_SPEED, timeSinceClientPinged } from "../main"
 import { inputQueue } from "./input"
-import { gameData, tilemap, timeSinceClientPinged } from "./networking"
+import { gameData, tilemap } from "./networking"
 
 export const checkCollisions = (position1:Vec2,dimensions1:Vec2,position2:Vec2,dimensions2:Vec2) => {
   return (position1.x < position2.x + dimensions2.x && 
