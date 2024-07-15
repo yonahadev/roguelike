@@ -17,7 +17,7 @@ const MAX_RUBIES = 10
 
 import { Socket } from "socket.io";
 import { DEFAULT_GAME_DATA, DEFAULT_PLAYER_DATA, IMAGE_NAMES, ImageEnum, MAP_HEIGHT, MAP_WIDTH, TICK_MS } from "./shared/constants";
-import { Player, Vec2 } from "./shared/types";
+import { Player, Projectile, Vec2 } from "./shared/types";
 import { getRandomInt } from './shared/utils';
 
 let gameData = structuredClone(DEFAULT_GAME_DATA)
@@ -53,6 +53,10 @@ io.on('connection', (socket:Socket) => {
   socket.emit('id', socket.id) 
   socket.emit('tilemap',tilemap)
   
+  socket.on('projectile', (projectile: Projectile) => { 
+    gameData.projectileData.push(projectile)
+  })
+
   socket.on('playerData', (receivedClientData: Player) => {
     if (socket.id in gameData.playerData) {
       gameData.playerData[socket.id].position = receivedClientData.position
@@ -93,7 +97,12 @@ setInterval(() => {
 }, TICK_MS)
 
 setInterval(() => {
-  // addRubies()
-  console.log(gameData.playerData)
-  console.log("Server Time:",gameData.serverTime)
-}, 5000);
+  let projectiles = gameData.projectileData
+  for (let i = 0; i < projectiles.length; i++) { 
+    let projectile = projectiles[i]
+    if (gameData.serverTime - projectile.timeProjected > projectile.lifetime) { 
+      projectiles.splice(i,1)
+    }
+  }
+  console.log(projectiles)
+}, 1000);

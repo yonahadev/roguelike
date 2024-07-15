@@ -1,5 +1,7 @@
+import { characterData } from "../../../shared/constants"
 import { localPlayer } from "../main"
 import { canvas } from "./drawing"
+import { fireProjectile, gameData, localID, timeSinceClientPinged } from "./networking"
 
 
 export let inputQueue = new Set()
@@ -60,17 +62,19 @@ document.addEventListener("keyup", (event) => {
 
 document.addEventListener('mousedown', () => { 
   if (canMove) { 
-    // console.log("Triggered projectile")
-    // if (gameData.serverTime - localPlayer.attackLastFired > 1000) { 
-    //   let characterProperties = characterData['fireCharacter']
-    //   let projectileTemplate = characterProperties.projectile
-    //   let newProjectile = structuredClone(projectileTemplate)
-    //   newProjectile.timeProjected = gameData.serverTime
-    //   newProjectile.position = localPlayer.position
-    //   newProjectile.orientation = localPlayer.orientation
-    //   projectiles.push(newProjectile)
-    //   localPlayer.attackLastFired = gameData.serverTime
-    // }
+
+    if (gameData.serverTime - localPlayer.attackLastFired > 1000) { 
+      let characterProperties = characterData['fireCharacter']
+      let projectileTemplate = characterProperties.projectile
+      let projectile = structuredClone(projectileTemplate)
+      projectile.timeProjected = gameData.serverTime+timeSinceClientPinged
+      projectile.position = localPlayer.position
+      projectile.orientation = localPlayer.orientation
+      projectile.owner = localID
+      localPlayer.attackLastFired = gameData.serverTime
+      fireProjectile(projectile)
+      console.log("fired projectile")
+    }
   }
 }) 
 

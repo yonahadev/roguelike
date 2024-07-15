@@ -1,7 +1,7 @@
 import { DEFAULT_PLAYER_DATA, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
 import './index.css';
-import { canvas, context, drawImage, drawPlayerWithNameTag, images } from "./modules/drawing";
-import { handleMovement } from "./modules/gameplay";
+import { canvas, context, drawImage, drawPlayerWithNameTag, getImage, images } from "./modules/drawing";
+import { calculateProjectilePosition, handleMovement } from "./modules/gameplay";
 import { canMove, resizeCanvas } from "./modules/input";
 import { gameData, gameDataArray, interpolatedPlayerData, interpolatePositions, localID, socket, tilemap } from "./modules/networking";
 
@@ -58,22 +58,15 @@ let renderFunction = (time: number) => {
         }
       })
     }
-
-
-    // for (let i = 0; i < projectiles.length; i++) { actual drawing of projecitle
-    //   let projectile = projectiles[i]
-    //   let timeSinceFired = gameData.serverTime - projectile.timeProjected
-    //   if (timeSinceFired < projectile.lifetime) {
-    //     // console.log("firing projectile")
-    //     let pheta = projectile.orientation
-    //     let positionX = Math.sin(pheta)*projectile.velocity*timeSinceFired
-    //     let positionY = -Math.cos(pheta) * projectile.velocity * timeSinceFired
-    //     console.log(positionX,positionY)
-    //     drawImage(getImage(ImageEnum.fireball),positionX+offsetX,positionY+offsetY,1,1)
-    //   } else { 
-    //     projectiles.splice(i,1)
-    //   }
-    // }
+    for (let i = 0; i < gameData.projectileData.length; i++) {
+      let projectile = gameData.projectileData[i]
+      if (projectile.owner != localID) { 
+        let position = calculateProjectilePosition(projectile)
+        let ownerPosition = interpolatedPlayerData[projectile.owner].position
+        drawImage(getImage(projectile.image), (position.x+ownerPosition.x)*SCALE+cameraOffsetX, (position.y+ownerPosition.y)*SCALE+cameraOffsetY, 1, 1)
+        console.log(position)
+      }
+    }
     // let players = Object.keys(gameData.playerData)
     // let height = 0
     // for (let i = 0; i < players.length; i++) {

@@ -18,6 +18,8 @@ export type Projectile = {
   lifetime: number
   timeProjected: number
   orientation: number
+  owner: string
+  image: number
 }
 
 export type Character = {
@@ -42,5 +44,6 @@ export type RubyDictionary = {
 export type GameDictionary = {
   playerData: PlayerDictionary,
   rubyData: RubyDictionary,
+  projectileData: Projectile[]
   serverTime: number
 }

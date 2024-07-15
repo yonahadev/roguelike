@@ -3,12 +3,13 @@ import { CharacterDictionary, GameDictionary, Player } from "./types"
 export const MAP_WIDTH = 20
 export const MAP_HEIGHT = 20
 
-export const TICK_RATE = 5
+export const TICK_RATE = 20
 export const TICK_MS = 1000/TICK_RATE
 
 export const DEFAULT_GAME_DATA:GameDictionary = {
   playerData: {},
   rubyData: {},
+  projectileData: [],
   serverTime: 0
 }
 
@@ -38,14 +39,16 @@ export const collideableTiles = new Set([IMAGE_NAMES[ImageEnum.wall]])
 
 export const characterData: CharacterDictionary = { 
   fireCharacter: { 
-    attackCooldown: 1000,
+    attackCooldown: 500,
     hp: 10,
     projectile: {
       lifetime: 300,
       position: { x: 0, y: 0 },
-      velocity: 2,
+      velocity: 0.02,
       timeProjected: 0,
       orientation: 0,
+      owner: "",
+      image: ImageEnum.fireball
     }
   }
 }

@@ -1,9 +1,9 @@
 import { collideableTiles } from "../../../shared/constants"
-import { Vec2 } from "../../../shared/types"
+import { Projectile, Vec2 } from "../../../shared/types"
 import { getTileAtPosition } from "../../../shared/utils"
 import { localPlayer, PLAYER_SPEED } from "../main"
 import { inputQueue } from "./input"
-import { tilemap } from "./networking"
+import { gameData, tilemap, timeSinceClientPinged } from "./networking"
 
 export const checkCollisions = (position1:Vec2,dimensions1:Vec2,position2:Vec2,dimensions2:Vec2) => {
   return (position1.x < position2.x + dimensions2.x && 
@@ -22,6 +22,14 @@ export const checkPlayerCollisions = () => {
   return collideableTiles.has(topLeft) || collideableTiles.has(topRight) || collideableTiles.has(bottomLeft) || collideableTiles.has(bottomRight)
 }
 
+export const calculateProjectilePosition = (projectile: Projectile) => {
+  let velocity = projectile.velocity
+  let time = gameData.serverTime + timeSinceClientPinged - projectile.timeProjected
+  let pheta = projectile.orientation
+  let x = velocity * time * Math.sin(pheta)
+  let y = -velocity * time * Math.cos(pheta)
+  return {x:x,y:y}
+}
 // let handleRubyCollection = () => { 
 //   Object.keys(gameData.rubyData).forEach((key:string) => { 
 //     let position = JSON.parse(key)
