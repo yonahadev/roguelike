@@ -1,5 +1,5 @@
 import { io } from "socket.io-client"
-import { DEFAULT_GAME_DATA } from "../../../shared/constants"
+import { BUFFER_SIZE, DEFAULT_GAME_DATA } from "../../../shared/constants"
 import { GameDictionary, PlayerDictionary, Projectile } from "../../../shared/types"
 import { renderTime, timeSinceClientPinged } from "../main"
 
@@ -30,12 +30,12 @@ socket.on('id', (id) => {
 socket.on('gameData', (gameDataFromServer) => { 
   clientPingedTime = renderTime
   gameDataArray.push(gameDataFromServer)
-  if (gameDataArray.length > 5) { 
+  if (gameDataArray.length > BUFFER_SIZE+3) { 
     gameDataArray.splice(0,1)
   }  
-  if (gameDataArray.length >= 2) { 
-    let oldGameData = gameDataArray[gameDataArray.length-2]
-    gameData = gameDataArray[gameDataArray.length-1]
+  if (gameDataArray.length >= BUFFER_SIZE) { 
+    let oldGameData = gameDataArray[gameDataArray.length-BUFFER_SIZE]
+    gameData = gameDataArray[gameDataArray.length-BUFFER_SIZE+1]
     oldPlayerData = structuredClone(oldGameData.playerData)
     newPlayerData = structuredClone(gameData.playerData)
     interpolatedPlayerData = structuredClone(oldPlayerData)

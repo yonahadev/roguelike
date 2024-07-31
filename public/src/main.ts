@@ -1,4 +1,4 @@
-import { DEFAULT_PLAYER_DATA, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
+import { BUFFER_SIZE, DEFAULT_PLAYER_DATA, MAP_HEIGHT, MAP_WIDTH } from "../../shared/constants";
 import './index.css';
 import { canvas, context, drawImage, drawPlayerWithNameTag, getImage, images } from "./modules/drawing";
 import { calculateProjectilePosition, handleMovement } from "./modules/gameplay";
@@ -50,7 +50,7 @@ let renderFunction = (time: number) => {
     //   drawImage(getImage(ImageEnum.ruby), canvas.width - width - SCALE - 10, height + 10, 0.5, 0.5)
     // }
 
-    if (gameDataArray.length >= 2) {
+    if (gameDataArray.length >= BUFFER_SIZE) {
       Object.entries(interpolatedPlayerData).forEach(([playerID, interpolatedPlayerData]) => {
         if (playerID != localID && playerID && interpolatedPlayerData) {
           if (interpolatedPlayerData) {
